@@ -14,7 +14,182 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_tools: {
+        Row: {
+          category: string
+          cost_per_use: number
+          created_at: string
+          description: string
+          icon_url: string | null
+          id: string
+          input_schema: Json
+          is_active: boolean
+          name: string
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          category: string
+          cost_per_use?: number
+          created_at?: string
+          description: string
+          icon_url?: string | null
+          id?: string
+          input_schema?: Json
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          category?: string
+          cost_per_use?: number
+          created_at?: string
+          description?: string
+          icon_url?: string | null
+          id?: string
+          input_schema?: Json
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tool_usage_logs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          credits_used: number
+          error_message: string | null
+          id: string
+          input_data: Json
+          output_data: Json | null
+          status: string
+          tool_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          credits_used: number
+          error_message?: string | null
+          id?: string
+          input_data?: Json
+          output_data?: Json | null
+          status?: string
+          tool_id: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          credits_used?: number
+          error_message?: string | null
+          id?: string
+          input_data?: Json
+          output_data?: Json | null
+          status?: string
+          tool_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_usage_logs_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "ai_tools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_credits: {
+        Row: {
+          created_at: string
+          credits: number
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits?: number
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
