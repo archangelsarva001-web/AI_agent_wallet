@@ -1,0 +1,327 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, Play, CheckCircle, XCircle, Zap } from "lucide-react";
+
+interface AITool {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  cost_per_use: number;
+  input_schema: any;
+  icon_url: string;
+}
+
+interface ToolDialogProps {
+  tool: AITool;
+  isOpen: boolean;
+  onClose: () => void;
+  credits: number;
+  onCreditsUpdate: () => void;
+}
+
+export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: ToolDialogProps) => {
+  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [isRunning, setIsRunning] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { user, session } = useAuth();
+  const { toast } = useToast();
+
+  const canAfford = credits >= tool.cost_per_use;
+
+  const handleInputChange = (fieldName: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
+  };
+
+  const validateForm = () => {
+    const schema = tool.input_schema;
+    for (const [fieldName, fieldConfig] of Object.entries(schema)) {
+      if ((fieldConfig as any).required && !formData[fieldName]) {
+        throw new Error(`${(fieldConfig as any).label || fieldName} is required`);
+      }
+    }
+  };
+
+  const handleRun = async () => {
+    if (!user || !session || !canAfford) return;
+
+    try {
+      validateForm();
+      setIsRunning(true);
+      setError(null);
+      setResult(null);
+
+      // Check credits again before processing
+      const { data: creditsData, error: creditsError } = await supabase
+        .from("user_credits")
+        .select("credits")
+        .eq("user_id", user.id)
+        .single();
+
+      if (creditsError || !creditsData || creditsData.credits < tool.cost_per_use) {
+        throw new Error("Insufficient credits");
+      }
+
+      // Create usage log
+      const { data: logData, error: logError } = await supabase
+        .from("tool_usage_logs")
+        .insert({
+          user_id: user.id,
+          tool_id: tool.id,
+          input_data: formData,
+          credits_used: tool.cost_per_use,
+          status: "processing"
+        })
+        .select()
+        .single();
+
+      if (logError) throw logError;
+
+      // Deduct credits
+      const { error: updateError } = await supabase
+        .from("user_credits")
+        .update({
+          credits: creditsData.credits - tool.cost_per_use
+        })
+        .eq("user_id", user.id);
+
+      if (updateError) throw updateError;
+
+      // Process the tool (mock implementation - replace with actual webhook call)
+      const mockResult = await mockProcessTool(tool, formData);
+      
+      // Update usage log with result
+      await supabase
+        .from("tool_usage_logs")
+        .update({
+          output_data: mockResult,
+          status: "completed",
+          completed_at: new Date().toISOString()
+        })
+        .eq("id", logData.id);
+
+      setResult(mockResult);
+      onCreditsUpdate();
+      
+      toast({
+        title: "Tool completed successfully!",
+        description: `Used ${tool.cost_per_use} credit${tool.cost_per_use !== 1 ? "s" : ""}`,
+      });
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      setError(errorMessage);
+      
+      toast({
+        title: "Tool execution failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  // Mock tool processing - replace with actual webhook integration
+  const mockProcessTool = async (tool: AITool, inputData: any): Promise<any> => {
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Mock responses based on tool type
+    switch (tool.name) {
+      case "Text Summarizer":
+        return {
+          summary: "This is a mock summary of the provided text. The key points have been extracted and condensed into this concise overview.",
+          word_count: 25,
+          original_length: inputData.text?.length || 0
+        };
+      
+      case "Language Translator":
+        return {
+          translated_text: `[Mock translation to ${inputData.target_language}]: ${inputData.text}`,
+          source_language: "English",
+          target_language: inputData.target_language,
+          confidence: 0.95
+        };
+      
+      case "Code Reviewer":
+        return {
+          review: "Code review completed! Here are some suggestions:\n\n1. Consider adding error handling\n2. Variable names could be more descriptive\n3. Add comments for complex logic",
+          rating: "Good",
+          suggestions_count: 3
+        };
+      
+      default:
+        return {
+          result: "Tool processing completed successfully!",
+          status: "success",
+          processed_at: new Date().toISOString()
+        };
+    }
+  };
+
+  const renderFormField = (fieldName: string, fieldConfig: any) => {
+    const { type, label, options, required } = fieldConfig;
+
+    switch (type) {
+      case "select":
+        return (
+          <div key={fieldName} className="space-y-2">
+            <Label htmlFor={fieldName}>
+              {label} {required && <span className="text-destructive">*</span>}
+            </Label>
+            <Select onValueChange={(value) => handleInputChange(fieldName, value)}>
+              <SelectTrigger>
+                <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((option: string) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        );
+
+      case "textarea":
+        return (
+          <div key={fieldName} className="space-y-2">
+            <Label htmlFor={fieldName}>
+              {label} {required && <span className="text-destructive">*</span>}
+            </Label>
+            <Textarea
+              id={fieldName}
+              placeholder={`Enter ${label.toLowerCase()}`}
+              value={formData[fieldName] || ""}
+              onChange={(e) => handleInputChange(fieldName, e.target.value)}
+              rows={4}
+            />
+          </div>
+        );
+
+      default:
+        return (
+          <div key={fieldName} className="space-y-2">
+            <Label htmlFor={fieldName}>
+              {label} {required && <span className="text-destructive">*</span>}
+            </Label>
+            <Input
+              id={fieldName}
+              type="text"
+              placeholder={`Enter ${label.toLowerCase()}`}
+              value={formData[fieldName] || ""}
+              onChange={(e) => handleInputChange(fieldName, e.target.value)}
+            />
+          </div>
+        );
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">{tool.icon_url}</div>
+            <div>
+              <DialogTitle className="text-xl">{tool.name}</DialogTitle>
+              <DialogDescription>{tool.description}</DialogDescription>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 pt-2">
+            <Badge variant="outline">{tool.category}</Badge>
+            <Badge variant={canAfford ? "default" : "destructive"}>
+              <Zap className="mr-1 h-3 w-3" />
+              {tool.cost_per_use} credit{tool.cost_per_use !== 1 ? "s" : ""}
+            </Badge>
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Input Form */}
+          <div className="space-y-4">
+            <h3 className="font-semibold">Configure Tool</h3>
+            {Object.entries(tool.input_schema).map(([fieldName, fieldConfig]) =>
+              renderFormField(fieldName, fieldConfig)
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <Button
+              onClick={handleRun}
+              disabled={!canAfford || isRunning}
+              variant="hero"
+              className="flex-1"
+            >
+              {isRunning ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : canAfford ? (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  Run Tool
+                </>
+              ) : (
+                <>
+                  <Zap className="mr-2 h-4 w-4" />
+                  Need More Credits
+                </>
+              )}
+            </Button>
+            <Button onClick={onClose} variant="outline">
+              Close
+            </Button>
+          </div>
+
+          {/* Results */}
+          {result && (
+            <Card className="border-success/20 bg-success/5">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircle className="h-5 w-5 text-success" />
+                  <h4 className="font-semibold text-success">Results</h4>
+                </div>
+                <pre className="whitespace-pre-wrap text-sm bg-background p-3 rounded border">
+                  {JSON.stringify(result, null, 2)}
+                </pre>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Error */}
+          {error && (
+            <Card className="border-destructive/20 bg-destructive/5">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <XCircle className="h-5 w-5 text-destructive" />
+                  <h4 className="font-semibold text-destructive">Error</h4>
+                </div>
+                <p className="text-sm text-destructive">{error}</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
