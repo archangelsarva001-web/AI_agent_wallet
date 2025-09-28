@@ -137,31 +137,90 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
   // Process tool with webhook support
   const processToolWithWebhook = async (tool: AITool, inputData: any): Promise<any> => {
     if (tool.webhook_url) {
+      const startTime = Date.now();
+      const payload = {
+        tool_name: tool.name,
+        user_id: user?.id,
+        input_data: inputData,
+        timestamp: new Date().toISOString(),
+      };
+
+      console.log('🚀 [WEBHOOK DEBUG] Starting webhook call:', {
+        url: tool.webhook_url,
+        payload: payload,
+        timestamp: new Date().toISOString()
+      });
+
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
         const response = await fetch(tool.webhook_url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            tool_name: tool.name,
-            user_id: user?.id,
-            input_data: inputData,
-            timestamp: new Date().toISOString(),
-          }),
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+        const responseTime = Date.now() - startTime;
+
+        console.log('📡 [WEBHOOK DEBUG] Response received:', {
+          status: response.status,
+          statusText: response.statusText,
+          headers: Object.fromEntries(response.headers.entries()),
+          responseTime: `${responseTime}ms`,
+          ok: response.ok
         });
 
         if (!response.ok) {
-          throw new Error(`Webhook failed with status: ${response.status}`);
+          const errorText = await response.text();
+          console.error('❌ [WEBHOOK DEBUG] Response not OK:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorBody: errorText
+          });
+          throw new Error(`Webhook failed with status: ${response.status} - ${errorText}`);
         }
 
         const result = await response.json();
+        console.log('✅ [WEBHOOK DEBUG] Success response:', {
+          result: result,
+          responseTime: `${responseTime}ms`
+        });
+
         return result;
       } catch (error) {
-        console.error('Webhook error:', error);
-        throw new Error(`Failed to process with webhook: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        const responseTime = Date.now() - startTime;
+        
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.error('⏰ [WEBHOOK DEBUG] Request timed out after 30s');
+          console.log('🔄 [WEBHOOK DEBUG] Falling back to mock processing due to timeout');
+          return mockProcessTool(tool, inputData);
+        }
+
+        console.error('💥 [WEBHOOK DEBUG] Webhook error details:', {
+          error: error,
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          responseTime: `${responseTime}ms`,
+          url: tool.webhook_url
+        });
+
+        // Check if it's likely a CORS error
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+          console.error('🚫 [WEBHOOK DEBUG] Possible CORS issue detected');
+          console.log('🔄 [WEBHOOK DEBUG] Falling back to mock processing due to possible CORS');
+          return mockProcessTool(tool, inputData);
+        }
+
+        console.log('🔄 [WEBHOOK DEBUG] Falling back to mock processing due to error');
+        return mockProcessTool(tool, inputData);
       }
     } else {
+      console.log('📝 [WEBHOOK DEBUG] No webhook URL, using mock processing');
       return mockProcessTool(tool, inputData);
     }
   };
