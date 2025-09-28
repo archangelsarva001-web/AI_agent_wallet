@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ const categories = [
 
 export default function Dashboard() {
   const { user, session, credits, subscription, refreshCredits, refreshSubscription } = useAuth();
+  const navigate = useNavigate();
   const [tools, setTools] = useState<AITool[]>([]);
   const [filteredTools, setFilteredTools] = useState<AITool[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +51,12 @@ export default function Dashboard() {
   const [selectedTool, setSelectedTool] = useState<AITool | null>(null);
   const [isSubscribing, setIsSubscribing] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!user && !loading) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
 
   useEffect(() => {
     fetchTools();
@@ -156,6 +164,19 @@ export default function Dashboard() {
         <Header user={user} />
         <div className="flex items-center justify-center h-96">
           <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header user={user} />
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <p className="text-muted-foreground">Please sign in to access the dashboard</p>
+          </div>
         </div>
       </div>
     );
