@@ -137,8 +137,7 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
   // Process tool with webhook support
   const processToolWithWebhook = async (tool: AITool, inputData: any): Promise<any> => {
     if (!tool.webhook_url) {
-      console.log('📝 [WEBHOOK DEBUG] No webhook URL configured, using mock processing');
-      return mockProcessTool(tool, inputData);
+      throw new Error('This tool requires a webhook URL to be configured. Please contact the administrator to set up the webhook integration.');
     }
 
     const startTime = Date.now();
@@ -222,43 +221,6 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
     }
   };
 
-  // Mock tool processing - replace with actual webhook integration
-  const mockProcessTool = async (tool: AITool, inputData: any): Promise<any> => {
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Mock responses based on tool type
-    switch (tool.name) {
-      case "Text Summarizer":
-        return {
-          summary: "This is a mock summary of the provided text. The key points have been extracted and condensed into this concise overview.",
-          word_count: 25,
-          original_length: inputData.text?.length || 0
-        };
-      
-      case "Language Translator":
-        return {
-          translated_text: `[Mock translation to ${inputData.target_language}]: ${inputData.text}`,
-          source_language: "English",
-          target_language: inputData.target_language,
-          confidence: 0.95
-        };
-      
-      case "Code Reviewer":
-        return {
-          review: "Code review completed! Here are some suggestions:\n\n1. Consider adding error handling\n2. Variable names could be more descriptive\n3. Add comments for complex logic",
-          rating: "Good",
-          suggestions_count: 3
-        };
-      
-      default:
-        return {
-          result: "Tool processing completed successfully!",
-          status: "success",
-          processed_at: new Date().toISOString()
-        };
-    }
-  };
 
   const renderFormField = (fieldName: string, fieldConfig: any) => {
     const { type, label, options, required, placeholder } = fieldConfig;
