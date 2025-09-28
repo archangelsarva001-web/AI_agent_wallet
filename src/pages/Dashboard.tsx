@@ -241,8 +241,8 @@ export default function Dashboard() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Credits</span>
-                  <Badge variant={credits > 10 ? "default" : "destructive"}>
-                    {credits} available
+                  <Badge variant={credits >= 999999 ? "secondary" : credits > 10 ? "default" : "destructive"}>
+                    {credits >= 999999 ? "∞ Unlimited" : `${credits} available`}
                   </Badge>
                 </div>
                 
