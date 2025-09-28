@@ -17,12 +17,12 @@ export type Database = {
       ai_tools: {
         Row: {
           category: string
-          cost_per_use: number
           created_at: string
+          credit_cost: number
           description: string
           icon_url: string | null
           id: string
-          input_schema: Json
+          input_fields: Json
           is_active: boolean
           name: string
           updated_at: string
@@ -30,12 +30,12 @@ export type Database = {
         }
         Insert: {
           category: string
-          cost_per_use?: number
           created_at?: string
+          credit_cost?: number
           description: string
           icon_url?: string | null
           id?: string
-          input_schema?: Json
+          input_fields?: Json
           is_active?: boolean
           name: string
           updated_at?: string
@@ -43,12 +43,12 @@ export type Database = {
         }
         Update: {
           category?: string
-          cost_per_use?: number
           created_at?: string
+          credit_cost?: number
           description?: string
           icon_url?: string | null
           id?: string
-          input_schema?: Json
+          input_fields?: Json
           is_active?: boolean
           name?: string
           updated_at?: string
@@ -56,137 +56,139 @@ export type Database = {
         }
         Relationships: []
       }
-      profiles: {
+      credits: {
         Row: {
-          created_at: string
-          email: string
-          full_name: string | null
-          id: string
-          updated_at: string
+          current_credits: number | null
+          last_updated: string | null
           user_id: string
         }
         Insert: {
-          created_at?: string
-          email: string
-          full_name?: string | null
-          id?: string
-          updated_at?: string
+          current_credits?: number | null
+          last_updated?: string | null
           user_id: string
         }
         Update: {
-          created_at?: string
-          email?: string
-          full_name?: string | null
-          id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      subscriptions: {
-        Row: {
-          created_at: string
-          current_period_end: string | null
-          current_period_start: string | null
-          id: string
-          status: string
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          current_period_end?: string | null
-          current_period_start?: string | null
-          id?: string
-          status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          current_period_end?: string | null
-          current_period_start?: string | null
-          id?: string
-          status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      tool_usage_logs: {
-        Row: {
-          completed_at: string | null
-          created_at: string
-          credits_used: number
-          error_message: string | null
-          id: string
-          input_data: Json
-          output_data: Json | null
-          status: string
-          tool_id: string
-          user_id: string
-        }
-        Insert: {
-          completed_at?: string | null
-          created_at?: string
-          credits_used: number
-          error_message?: string | null
-          id?: string
-          input_data?: Json
-          output_data?: Json | null
-          status?: string
-          tool_id: string
-          user_id: string
-        }
-        Update: {
-          completed_at?: string | null
-          created_at?: string
-          credits_used?: number
-          error_message?: string | null
-          id?: string
-          input_data?: Json
-          output_data?: Json | null
-          status?: string
-          tool_id?: string
+          current_credits?: number | null
+          last_updated?: string | null
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "tool_usage_logs_tool_id_fkey"
+            foreignKeyName: "credits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          ended_at: string | null
+          id: string
+          price: number | null
+          started_at: string | null
+          status: string
+          stripe_subscription_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ended_at?: string | null
+          id?: string
+          price?: number | null
+          started_at?: string | null
+          status: string
+          stripe_subscription_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ended_at?: string | null
+          id?: string
+          price?: number | null
+          started_at?: string | null
+          status?: string
+          stripe_subscription_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tool_usages: {
+        Row: {
+          credits_deducted: number | null
+          id: string
+          input_data: Json | null
+          tool_id: string | null
+          used_at: string | null
+          user_id: string | null
+          webhook_response: Json | null
+        }
+        Insert: {
+          credits_deducted?: number | null
+          id?: string
+          input_data?: Json | null
+          tool_id?: string | null
+          used_at?: string | null
+          user_id?: string | null
+          webhook_response?: Json | null
+        }
+        Update: {
+          credits_deducted?: number | null
+          id?: string
+          input_data?: Json | null
+          tool_id?: string | null
+          used_at?: string | null
+          user_id?: string | null
+          webhook_response?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_usages_tool_id_fkey"
             columns: ["tool_id"]
             isOneToOne: false
             referencedRelation: "ai_tools"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tool_usages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
-      user_credits: {
+      users: {
         Row: {
-          created_at: string
-          credits: number
+          created_at: string | null
+          email: string
+          full_name: string | null
           id: string
-          updated_at: string
-          user_id: string
+          is_subscribed: boolean | null
+          stripe_customer_id: string | null
         }
         Insert: {
-          created_at?: string
-          credits?: number
-          id?: string
-          updated_at?: string
-          user_id: string
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          is_subscribed?: boolean | null
+          stripe_customer_id?: string | null
         }
         Update: {
-          created_at?: string
-          credits?: number
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
           id?: string
-          updated_at?: string
-          user_id?: string
+          is_subscribed?: boolean | null
+          stripe_customer_id?: string | null
         }
         Relationships: []
       }

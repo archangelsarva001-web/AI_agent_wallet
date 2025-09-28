@@ -17,8 +17,8 @@ interface AITool {
   name: string;
   description: string;
   category: string;
-  cost_per_use: number;
-  input_schema: any;
+  credit_cost: number;
+  input_fields: any;
   icon_url: string;
 }
 
@@ -38,7 +38,7 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
   const { user, session } = useAuth();
   const { toast } = useToast();
 
-  const canAfford = credits >= tool.cost_per_use;
+  const canAfford = credits >= tool.credit_cost;
 
   const handleInputChange = (fieldName: string, value: any) => {
     setFormData(prev => ({
@@ -48,7 +48,7 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
   };
 
   const validateForm = () => {
-    const schema = tool.input_schema;
+    const schema = tool.input_fields;
     for (const [fieldName, fieldConfig] of Object.entries(schema)) {
       if ((fieldConfig as any).required && !formData[fieldName]) {
         throw new Error(`${(fieldConfig as any).label || fieldName} is required`);
@@ -67,24 +67,23 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
 
       // Check credits again before processing
       const { data: creditsData, error: creditsError } = await supabase
-        .from("user_credits")
-        .select("credits")
+        .from("credits")
+        .select("current_credits")
         .eq("user_id", user.id)
         .single();
 
-      if (creditsError || !creditsData || creditsData.credits < tool.cost_per_use) {
+      if (creditsError || !creditsData || creditsData.current_credits < tool.credit_cost) {
         throw new Error("Insufficient credits");
       }
 
       // Create usage log
       const { data: logData, error: logError } = await supabase
-        .from("tool_usage_logs")
+        .from("tool_usages")
         .insert({
           user_id: user.id,
           tool_id: tool.id,
           input_data: formData,
-          credits_used: tool.cost_per_use,
-          status: "processing"
+          credits_deducted: tool.credit_cost
         })
         .select()
         .single();
@@ -93,9 +92,9 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
 
       // Deduct credits
       const { error: updateError } = await supabase
-        .from("user_credits")
+        .from("credits")
         .update({
-          credits: creditsData.credits - tool.cost_per_use
+          current_credits: creditsData.current_credits - tool.credit_cost
         })
         .eq("user_id", user.id);
 
@@ -106,11 +105,10 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
       
       // Update usage log with result
       await supabase
-        .from("tool_usage_logs")
+        .from("tool_usages")
         .update({
-          output_data: mockResult,
-          status: "completed",
-          completed_at: new Date().toISOString()
+          webhook_response: mockResult,
+          used_at: new Date().toISOString()
         })
         .eq("id", logData.id);
 
@@ -119,7 +117,7 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
       
       toast({
         title: "Tool completed successfully!",
-        description: `Used ${tool.cost_per_use} credit${tool.cost_per_use !== 1 ? "s" : ""}`,
+        description: `Used ${tool.credit_cost} credit${tool.credit_cost !== 1 ? "s" : ""}`,
       });
 
     } catch (error) {
@@ -249,7 +247,7 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
             <Badge variant="outline">{tool.category}</Badge>
             <Badge variant={canAfford ? "default" : "destructive"}>
               <Zap className="mr-1 h-3 w-3" />
-              {tool.cost_per_use} credit{tool.cost_per_use !== 1 ? "s" : ""}
+              {tool.credit_cost} credit{tool.credit_cost !== 1 ? "s" : ""}
             </Badge>
           </div>
         </DialogHeader>
@@ -258,7 +256,7 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
           {/* Input Form */}
           <div className="space-y-4">
             <h3 className="font-semibold">Configure Tool</h3>
-            {Object.entries(tool.input_schema).map(([fieldName, fieldConfig]) =>
+            {Object.entries(tool.input_fields).map(([fieldName, fieldConfig]) =>
               renderFormField(fieldName, fieldConfig)
             )}
           </div>

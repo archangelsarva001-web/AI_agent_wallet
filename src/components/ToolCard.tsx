@@ -8,8 +8,8 @@ interface AITool {
   name: string;
   description: string;
   category: string;
-  cost_per_use: number;
-  input_schema: any;
+  credit_cost: number;
+  input_fields: any;
   icon_url: string;
 }
 
@@ -20,7 +20,7 @@ interface ToolCardProps {
 }
 
 export const ToolCard = ({ tool, credits, onUse }: ToolCardProps) => {
-  const canAfford = credits >= tool.cost_per_use;
+  const canAfford = credits >= tool.credit_cost;
 
   return (
     <Card className="group hover:shadow-medium transition-all duration-300 hover:-translate-y-1 gradient-card">
@@ -28,7 +28,7 @@ export const ToolCard = ({ tool, credits, onUse }: ToolCardProps) => {
         <div className="flex items-center justify-between">
           <div className="text-2xl">{tool.icon_url}</div>
           <Badge variant="secondary" className="text-xs">
-            {tool.cost_per_use} credit{tool.cost_per_use !== 1 ? "s" : ""}
+            {tool.credit_cost} credit{tool.credit_cost !== 1 ? "s" : ""}
           </Badge>
         </div>
         <CardTitle className="text-lg">{tool.name}</CardTitle>

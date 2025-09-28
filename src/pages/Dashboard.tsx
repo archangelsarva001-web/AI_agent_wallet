@@ -24,8 +24,8 @@ interface AITool {
   name: string;
   description: string;
   category: string;
-  cost_per_use: number;
-  input_schema: any;
+  credit_cost: number;
+  input_fields: any;
   icon_url: string;
 }
 
@@ -62,7 +62,7 @@ export default function Dashboard() {
     try {
       const { data, error } = await supabase
         .from("ai_tools")
-        .select("*")
+        .select("id, name, description, category, credit_cost, input_fields, icon_url")
         .eq("is_active", true)
         .order("name");
 

@@ -35,6 +35,12 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
     if (customers.data.length === 0) {
+      // Update local subscription status
+      await supabaseClient
+        .from('users')
+        .update({ is_subscribed: false })
+        .eq('id', user.id);
+      
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -56,6 +62,21 @@ serve(async (req) => {
       const subscription = subscriptions.data[0];
       subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
       productId = subscription.items.data[0].price.product;
+      
+      // Update local subscription status and Stripe customer ID
+      await supabaseClient
+        .from('users')
+        .update({ 
+          is_subscribed: true,
+          stripe_customer_id: customerId
+        })
+        .eq('id', user.id);
+    } else {
+      // Update local subscription status
+      await supabaseClient
+        .from('users')
+        .update({ is_subscribed: false })
+        .eq('id', user.id);
     }
 
     return new Response(JSON.stringify({

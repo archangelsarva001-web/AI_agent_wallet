@@ -51,8 +51,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     
     try {
       const { data, error } = await supabase
-        .from("user_credits")
-        .select("credits")
+        .from("credits")
+        .select("current_credits")
         .eq("user_id", user.id)
         .single();
       
@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return;
       }
       
-      setCredits(data?.credits || 0);
+      setCredits(data?.current_credits || 0);
     } catch (error) {
       console.error("Error in refreshCredits:", error);
     }
@@ -71,22 +71,48 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (!user || !session) return;
     
     try {
-      const { data, error } = await supabase.functions.invoke("check-subscription", {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+      // First check local subscription status from users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('is_subscribed')
+        .eq('id', user.id)
+        .single();
       
-      if (error) {
-        console.error("Error checking subscription:", error);
+      if (userError && userError.code !== "PGRST116") {
+        console.error("Error fetching user subscription status:", userError);
         return;
       }
       
-      setSubscription({
-        subscribed: data.subscribed || false,
-        product_id: data.product_id,
-        subscription_end: data.subscription_end,
-      });
+      // If locally subscribed, also check Stripe for detailed info
+      if (userData?.is_subscribed) {
+        const { data, error } = await supabase.functions.invoke("check-subscription", {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+        
+        if (error) {
+          console.error("Error checking Stripe subscription:", error);
+          setSubscription({ 
+            subscribed: true,
+            product_id: undefined,
+            subscription_end: undefined 
+          }); // Fall back to local status
+          return;
+        }
+        
+        setSubscription({
+          subscribed: data.subscribed || false,
+          product_id: data.product_id,
+          subscription_end: data.subscription_end,
+        });
+      } else {
+        setSubscription({
+          subscribed: false,
+          product_id: undefined,
+          subscription_end: undefined,
+        });
+      }
     } catch (error) {
       console.error("Error in refreshSubscription:", error);
     }
