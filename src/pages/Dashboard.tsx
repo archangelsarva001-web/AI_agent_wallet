@@ -37,7 +37,8 @@ const categories = [
   "Language Processing", 
   "Development", 
   "Marketing", 
-  "Communication"
+  "Communication",
+  "Sales"
 ];
 
 export default function Dashboard() {
