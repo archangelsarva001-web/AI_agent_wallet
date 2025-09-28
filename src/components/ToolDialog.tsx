@@ -66,14 +66,11 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
       setError(null);
       setResult(null);
 
-      // Check credits again before processing
-      const { data: creditsData, error: creditsError } = await supabase
-        .from("credits")
-        .select("current_credits")
-        .eq("user_id", user.id)
-        .single();
+      // Check credits using the role-aware function
+      const { data: currentCredits, error: creditsError } = await supabase
+        .rpc("get_user_credits", { _user_id: user.id });
 
-      if (creditsError || !creditsData || creditsData.current_credits < tool.credit_cost) {
+      if (creditsError || currentCredits < tool.credit_cost) {
         throw new Error("Insufficient credits");
       }
 
@@ -91,15 +88,17 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
 
       if (logError) throw logError;
 
-      // Deduct credits
-      const { error: updateError } = await supabase
-        .from("credits")
-        .update({
-          current_credits: creditsData.current_credits - tool.credit_cost
-        })
-        .eq("user_id", user.id);
+      // Deduct credits (only if not admin with infinite credits)
+      if (currentCredits !== 999999) {
+        const { error: updateError } = await supabase
+          .from("credits")
+          .update({
+            current_credits: currentCredits - tool.credit_cost
+          })
+          .eq("user_id", user.id);
 
-      if (updateError) throw updateError;
+        if (updateError) throw updateError;
+      }
 
       // Process the tool (webhook call if available, otherwise mock)
       const toolResult = await processToolWithWebhook(tool, formData);
