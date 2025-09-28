@@ -20,6 +20,7 @@ interface AITool {
   credit_cost: number;
   input_fields: any;
   icon_url: string;
+  webhook_url?: string;
 }
 
 interface ToolDialogProps {
@@ -100,19 +101,19 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
 
       if (updateError) throw updateError;
 
-      // Process the tool (mock implementation - replace with actual webhook call)
-      const mockResult = await mockProcessTool(tool, formData);
+      // Process the tool (webhook call if available, otherwise mock)
+      const toolResult = await processToolWithWebhook(tool, formData);
       
       // Update usage log with result
       await supabase
         .from("tool_usages")
         .update({
-          webhook_response: mockResult,
+          webhook_response: toolResult,
           used_at: new Date().toISOString()
         })
         .eq("id", logData.id);
 
-      setResult(mockResult);
+      setResult(toolResult);
       onCreditsUpdate();
       
       toast({
@@ -131,6 +132,38 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
       });
     } finally {
       setIsRunning(false);
+    }
+  };
+
+  // Process tool with webhook support
+  const processToolWithWebhook = async (tool: AITool, inputData: any): Promise<any> => {
+    if (tool.webhook_url) {
+      try {
+        const response = await fetch(tool.webhook_url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            tool_name: tool.name,
+            user_id: user?.id,
+            input_data: inputData,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Webhook failed with status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result;
+      } catch (error) {
+        console.error('Webhook error:', error);
+        throw new Error(`Failed to process with webhook: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    } else {
+      return mockProcessTool(tool, inputData);
     }
   };
 
@@ -173,7 +206,7 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
   };
 
   const renderFormField = (fieldName: string, fieldConfig: any) => {
-    const { type, label, options, required } = fieldConfig;
+    const { type, label, options, required, placeholder } = fieldConfig;
 
     switch (type) {
       case "select":
@@ -205,7 +238,7 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
             </Label>
             <Textarea
               id={fieldName}
-              placeholder={`Enter ${label.toLowerCase()}`}
+              placeholder={placeholder || `Enter ${label.toLowerCase()}`}
               value={formData[fieldName] || ""}
               onChange={(e) => handleInputChange(fieldName, e.target.value)}
               rows={4}
@@ -222,7 +255,7 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
             <Input
               id={fieldName}
               type="text"
-              placeholder={`Enter ${label.toLowerCase()}`}
+              placeholder={placeholder || `Enter ${label.toLowerCase()}`}
               value={formData[fieldName] || ""}
               onChange={(e) => handleInputChange(fieldName, e.target.value)}
             />
@@ -299,9 +332,15 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
                   <CheckCircle className="h-5 w-5 text-success" />
                   <h4 className="font-semibold text-success">Results</h4>
                 </div>
-                <pre className="whitespace-pre-wrap text-sm bg-background p-3 rounded border">
-                  {JSON.stringify(result, null, 2)}
-                </pre>
+                <div className="bg-background p-4 rounded border">
+                  {typeof result === 'string' ? (
+                    <div className="whitespace-pre-wrap text-sm">{result}</div>
+                  ) : (
+                    <pre className="whitespace-pre-wrap text-sm">
+                      {JSON.stringify(result, null, 2)}
+                    </pre>
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}
