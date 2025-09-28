@@ -65,6 +65,11 @@ export default function Dashboard() {
     fetchTools();
     if (user) {
       fetchUserRole();
+      // Immediate refresh for admin users
+      setTimeout(() => {
+        console.log('Dashboard loaded, refreshing credits');
+        refreshCredits();
+      }, 200);
     }
   }, [user]);
 
@@ -229,7 +234,10 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">Account Status</CardTitle>
                   <Button
-                    onClick={refreshCredits}
+                    onClick={() => {
+                      console.log('Refresh button clicked');
+                      refreshCredits();
+                    }}
                     variant="ghost"
                     size="sm"
                     className="h-8 w-8 p-0"

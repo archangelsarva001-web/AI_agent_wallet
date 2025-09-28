@@ -50,15 +50,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (!user) return;
     
     try {
+      console.log('Refreshing credits for user:', user.id);
+      
       // Use the new role-based credit function
       const { data, error } = await supabase
         .rpc("get_user_credits", { _user_id: user.id });
+      
+      console.log('Credits response:', { data, error });
       
       if (error) {
         console.error("Error fetching credits:", error);
         return;
       }
       
+      console.log('Setting credits to:', data);
       setCredits(data || 0);
     } catch (error) {
       console.error("Error in refreshCredits:", error);
@@ -179,9 +184,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (session?.user) {
           // Defer async operations with setTimeout
           setTimeout(() => {
+            console.log('Auth state changed, refreshing credits');
             refreshCredits();
             refreshSubscription();
-          }, 0);
+          }, 100); // Slightly longer delay to ensure user state is set
         } else {
           setCredits(0);
           setSubscription({
@@ -202,9 +208,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       if (session?.user) {
         setTimeout(() => {
+          console.log('Initial session found, refreshing credits');
           refreshCredits();
           refreshSubscription();
-        }, 0);
+        }, 100);
       }
       
       setLoading(false);
