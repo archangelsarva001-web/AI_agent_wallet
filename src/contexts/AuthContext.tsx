@@ -50,18 +50,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (!user) return;
     
     try {
+      // Use the new role-based credit function
       const { data, error } = await supabase
-        .from("credits")
-        .select("current_credits")
-        .eq("user_id", user.id)
-        .single();
+        .rpc("get_user_credits", { _user_id: user.id });
       
-      if (error && error.code !== "PGRST116") {
+      if (error) {
         console.error("Error fetching credits:", error);
         return;
       }
       
-      setCredits(data?.current_credits || 0);
+      setCredits(data || 0);
     } catch (error) {
       console.error("Error in refreshCredits:", error);
     }

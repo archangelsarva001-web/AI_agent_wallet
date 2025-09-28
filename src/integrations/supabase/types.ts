@@ -98,17 +98,23 @@ export type Database = {
       credits: {
         Row: {
           current_credits: number | null
+          last_purchase_date: string | null
           last_updated: string | null
+          total_purchased: number | null
           user_id: string
         }
         Insert: {
           current_credits?: number | null
+          last_purchase_date?: string | null
           last_updated?: string | null
+          total_purchased?: number | null
           user_id: string
         }
         Update: {
           current_credits?: number | null
+          last_purchase_date?: string | null
           last_updated?: string | null
+          total_purchased?: number | null
           user_id?: string
         }
         Relationships: [
@@ -303,6 +309,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_user_credits: {
+        Args: { _user_id: string }
+        Returns: number
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -327,6 +337,10 @@ export type Database = {
           _resource_type?: string
           _user_id: string
         }
+        Returns: undefined
+      }
+      refresh_moderator_credits: {
+        Args: { _user_id: string }
         Returns: undefined
       }
       sanitize_input: {
