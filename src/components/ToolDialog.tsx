@@ -136,92 +136,89 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
 
   // Process tool with webhook support
   const processToolWithWebhook = async (tool: AITool, inputData: any): Promise<any> => {
-    if (tool.webhook_url) {
-      const startTime = Date.now();
-      const payload = {
-        tool_name: tool.name,
-        user_id: user?.id,
-        input_data: inputData,
-        timestamp: new Date().toISOString(),
-      };
+    if (!tool.webhook_url) {
+      console.log('📝 [WEBHOOK DEBUG] No webhook URL configured, using mock processing');
+      return mockProcessTool(tool, inputData);
+    }
 
-      console.log('🚀 [WEBHOOK DEBUG] Starting webhook call:', {
-        url: tool.webhook_url,
-        payload: payload,
-        timestamp: new Date().toISOString()
+    const startTime = Date.now();
+    const payload = {
+      tool_name: tool.name,
+      user_id: user?.id,
+      input_data: inputData,
+      timestamp: new Date().toISOString(),
+    };
+
+    console.log('🚀 [WEBHOOK DEBUG] Starting webhook call:', {
+      url: tool.webhook_url,
+      payload: payload,
+      timestamp: new Date().toISOString()
+    });
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+      const response = await fetch(tool.webhook_url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
       });
 
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      clearTimeout(timeoutId);
+      const responseTime = Date.now() - startTime;
 
-        const response = await fetch(tool.webhook_url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal
-        });
+      console.log('📡 [WEBHOOK DEBUG] Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        responseTime: `${responseTime}ms`,
+        ok: response.ok
+      });
 
-        clearTimeout(timeoutId);
-        const responseTime = Date.now() - startTime;
-
-        console.log('📡 [WEBHOOK DEBUG] Response received:', {
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ [WEBHOOK DEBUG] Response not OK:', {
           status: response.status,
           statusText: response.statusText,
-          headers: Object.fromEntries(response.headers.entries()),
-          responseTime: `${responseTime}ms`,
-          ok: response.ok
+          errorBody: errorText
         });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ [WEBHOOK DEBUG] Response not OK:', {
-            status: response.status,
-            statusText: response.statusText,
-            errorBody: errorText
-          });
-          throw new Error(`Webhook failed with status: ${response.status} - ${errorText}`);
-        }
-
-        const result = await response.json();
-        console.log('✅ [WEBHOOK DEBUG] Success response:', {
-          result: result,
-          responseTime: `${responseTime}ms`
-        });
-
-        return result;
-      } catch (error) {
-        const responseTime = Date.now() - startTime;
-        
-        if (error instanceof Error && error.name === 'AbortError') {
-          console.error('⏰ [WEBHOOK DEBUG] Request timed out after 30s');
-          console.log('🔄 [WEBHOOK DEBUG] Falling back to mock processing due to timeout');
-          return mockProcessTool(tool, inputData);
-        }
-
-        console.error('💥 [WEBHOOK DEBUG] Webhook error details:', {
-          error: error,
-          message: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined,
-          responseTime: `${responseTime}ms`,
-          url: tool.webhook_url
-        });
-
-        // Check if it's likely a CORS error
-        if (error instanceof TypeError && error.message.includes('fetch')) {
-          console.error('🚫 [WEBHOOK DEBUG] Possible CORS issue detected');
-          console.log('🔄 [WEBHOOK DEBUG] Falling back to mock processing due to possible CORS');
-          return mockProcessTool(tool, inputData);
-        }
-
-        console.log('🔄 [WEBHOOK DEBUG] Falling back to mock processing due to error');
-        return mockProcessTool(tool, inputData);
+        throw new Error(`Webhook failed: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`);
       }
-    } else {
-      console.log('📝 [WEBHOOK DEBUG] No webhook URL, using mock processing');
-      return mockProcessTool(tool, inputData);
+
+      const result = await response.json();
+      console.log('✅ [WEBHOOK DEBUG] Success response:', {
+        result: result,
+        responseTime: `${responseTime}ms`
+      });
+
+      return result;
+    } catch (error) {
+      const responseTime = Date.now() - startTime;
+      
+      console.error('💥 [WEBHOOK DEBUG] Webhook error details:', {
+        error: error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        responseTime: `${responseTime}ms`,
+        url: tool.webhook_url
+      });
+
+      // Create user-friendly error messages
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Webhook request timed out after 30 seconds. Please check if your n8n workflow is running and responding correctly.');
+      }
+
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Unable to connect to webhook. This might be a CORS issue or the webhook URL is unreachable. Please check your n8n workflow URL and CORS settings.');
+      }
+
+      // Re-throw the original error with additional context
+      const originalMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Webhook execution failed: ${originalMessage}. Please check your n8n workflow and webhook configuration.`);
     }
   };
 
