@@ -19,6 +19,7 @@ import { Header } from "@/components/Header";
 import { useToast } from "@/hooks/use-toast";
 import { ToolCard } from "@/components/ToolCard";
 import { ToolDialog } from "@/components/ToolDialog";
+import { CreditPurchase } from "@/components/CreditPurchase";
 
 interface AITool {
   id: string;
@@ -50,6 +51,7 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedTool, setSelectedTool] = useState<AITool | null>(null);
+  const [userRole, setUserRole] = useState<string>("");
   const [isSubscribing, setIsSubscribing] = useState(false);
   const { toast } = useToast();
 
@@ -61,11 +63,32 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchTools();
-  }, []);
+    if (user) {
+      fetchUserRole();
+    }
+  }, [user]);
 
   useEffect(() => {
     filterTools();
   }, [tools, searchTerm, selectedCategory]);
+
+  const fetchUserRole = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .rpc("get_user_role", { _user_id: user.id });
+      
+      if (error) {
+        console.error("Error fetching user role:", error);
+        return;
+      }
+      
+      setUserRole(data || "user");
+    } catch (error) {
+      console.error("Error in fetchUserRole:", error);
+    }
+  };
 
   const fetchTools = async () => {
     try {
@@ -265,6 +288,11 @@ export default function Dashboard() {
             </Card>
           </div>
         </section>
+
+        {/* Credit Purchase Component - Show for regular users with low credits */}
+        <CreditPurchase 
+          show={userRole === "user" && credits < 3}
+        />
 
         {/* Search & Filter */}
         <section className="mb-8">
