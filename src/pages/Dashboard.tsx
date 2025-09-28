@@ -99,7 +99,7 @@ export default function Dashboard() {
     try {
       const { data, error } = await supabase
         .from("ai_tools")
-        .select("id, name, description, category, credit_cost, input_fields, icon_url")
+        .select("id, name, description, category, credit_cost, input_fields, icon_url, webhook_url")
         .eq("is_active", true)
         .order("name");
 
