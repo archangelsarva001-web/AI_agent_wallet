@@ -58,6 +58,17 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
       if (field.required && !formData[fieldName]) {
         throw new Error(`${field.label || fieldName} is required`);
       }
+      
+      // Validate file type if it's a file field
+      if (field.type === 'file' && formData[fieldName] && field.accept) {
+        const file = formData[fieldName];
+        const acceptedTypes = field.accept.split(',').map((t: string) => t.trim());
+        const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+        
+        if (!acceptedTypes.includes(fileExtension)) {
+          throw new Error(`Invalid file type. Please upload a ${acceptedTypes.join(' or ')} file`);
+        }
+      }
     }
   };
 
@@ -145,16 +156,46 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
     }
 
     const startTime = Date.now();
-    const payload = {
-      tool_name: tool.name,
-      user_id: user?.id,
-      input_data: inputData,
-      timestamp: new Date().toISOString(),
-    };
+    
+    // Check if we have file data to send as FormData
+    const hasFiles = Object.values(inputData).some(value => value instanceof File);
+    
+    let requestBody: any;
+    let headers: any = {};
+    
+    if (hasFiles) {
+      // Create FormData for file uploads
+      const formData = new FormData();
+      
+      Object.entries(inputData).forEach(([key, value]) => {
+        if (value instanceof File) {
+          formData.append(key, value);
+        } else {
+          formData.append(key, String(value));
+        }
+      });
+      
+      // Add metadata
+      formData.append('tool_name', tool.name);
+      formData.append('user_id', user?.id || '');
+      formData.append('timestamp', new Date().toISOString());
+      
+      requestBody = formData;
+      // Don't set Content-Type header - browser will set it with boundary
+    } else {
+      // Regular JSON payload
+      requestBody = JSON.stringify({
+        tool_name: tool.name,
+        user_id: user?.id,
+        input_data: inputData,
+        timestamp: new Date().toISOString(),
+      });
+      headers['Content-Type'] = 'application/json';
+    }
 
     console.log('🚀 [WEBHOOK DEBUG] Starting webhook call:', {
       url: tool.webhook_url,
-      payload: payload,
+      hasFiles: hasFiles,
       timestamp: new Date().toISOString()
     });
 
@@ -164,10 +205,8 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
 
       const response = await fetch(tool.webhook_url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+        headers: headers,
+        body: requestBody,
         signal: controller.signal
       });
 
@@ -227,9 +266,35 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
 
 
   const renderFormField = (fieldConfig: any) => {
-    const { name: fieldName, type, label, options, required, placeholder } = fieldConfig;
+    const { name: fieldName, type, label, options, required, placeholder, accept } = fieldConfig;
 
     switch (type) {
+      case "file":
+        return (
+          <div key={fieldName} className="space-y-2">
+            <Label htmlFor={fieldName}>
+              {label} {required && <span className="text-destructive">*</span>}
+            </Label>
+            <Input
+              id={fieldName}
+              type="file"
+              accept={accept}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  handleInputChange(fieldName, file);
+                }
+              }}
+              className="cursor-pointer"
+            />
+            {formData[fieldName] && (
+              <p className="text-sm text-muted-foreground">
+                Selected: {formData[fieldName].name}
+              </p>
+            )}
+          </div>
+        );
+      
       case "select":
         return (
           <div key={fieldName} className="space-y-2">
