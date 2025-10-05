@@ -49,10 +49,14 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
   };
 
   const validateForm = () => {
-    const schema = tool.input_fields;
-    for (const [fieldName, fieldConfig] of Object.entries(schema)) {
-      if ((fieldConfig as any).required && !formData[fieldName]) {
-        throw new Error(`${(fieldConfig as any).label || fieldName} is required`);
+    const fields = Array.isArray(tool.input_fields) 
+      ? tool.input_fields 
+      : Object.entries(tool.input_fields).map(([name, config]) => ({ name, ...(config as any) }));
+    
+    for (const field of fields) {
+      const fieldName = field.name;
+      if (field.required && !formData[fieldName]) {
+        throw new Error(`${field.label || fieldName} is required`);
       }
     }
   };
@@ -222,8 +226,8 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
   };
 
 
-  const renderFormField = (fieldName: string, fieldConfig: any) => {
-    const { type, label, options, required, placeholder } = fieldConfig;
+  const renderFormField = (fieldConfig: any) => {
+    const { name: fieldName, type, label, options, required, placeholder } = fieldConfig;
 
     switch (type) {
       case "select":
@@ -306,9 +310,10 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
           {/* Input Form */}
           <div className="space-y-4">
             <h3 className="font-semibold">Configure Tool</h3>
-            {Object.entries(tool.input_fields).map(([fieldName, fieldConfig]) =>
-              renderFormField(fieldName, fieldConfig)
-            )}
+            {(Array.isArray(tool.input_fields) 
+              ? tool.input_fields 
+              : Object.entries(tool.input_fields).map(([name, config]) => ({ name, ...(config as any) }))
+            ).map((fieldConfig: any) => renderFormField(fieldConfig))}
           </div>
 
           {/* Action Buttons */}
