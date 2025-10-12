@@ -82,23 +82,35 @@ const Settings = () => {
     }
   };
 
+  const getPageTitle = () => {
+    switch (activeTab) {
+      case "profile": return "Profile Settings";
+      case "users": return "User Management";
+      case "tools": return "Tool Development";
+      default: return "Settings";
+    }
+  };
+
+  const getPageDescription = () => {
+    switch (activeTab) {
+      case "profile": return "Manage your personal profile information";
+      case "users": return "Manage user roles and permissions";
+      case "tools": return "Create and manage custom AI tools";
+      default: return "Manage your account and system settings";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Settings</h1>
-            <p className="text-muted-foreground">Manage your account and system settings</p>
+            <h1 className="text-3xl font-bold mb-2">{getPageTitle()}</h1>
+            <p className="text-muted-foreground">{getPageDescription()}</p>
           </div>
 
-          <Tabs value={activeTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="profile">Profile</TabsTrigger>
-              {isAdmin && <TabsTrigger value="users">User Management</TabsTrigger>}
-              {isAdmin && <TabsTrigger value="tools">Tool Dev</TabsTrigger>}
-            </TabsList>
-
-            <TabsContent value="profile" className="space-y-6">
+          <div className="space-y-6">
+            {activeTab === "profile" && (
               <Card>
                 <CardHeader>
                   <CardTitle>Profile Information</CardTitle>
@@ -138,29 +150,25 @@ const Settings = () => {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-
-            {isAdmin && (
-              <TabsContent value="users" className="space-y-6">
-                <UserRoleManager />
-              </TabsContent>
             )}
 
-            {isAdmin && (
-              <TabsContent value="tools" className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Tool Development</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">
-                      Tool development features coming soon. This section will allow you to create and manage custom AI tools.
-                    </p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+            {activeTab === "users" && isAdmin && (
+              <UserRoleManager />
             )}
-          </Tabs>
+
+            {activeTab === "tools" && isAdmin && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tool Development</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Tool development features coming soon. This section will allow you to create and manage custom AI tools.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
     </div>
