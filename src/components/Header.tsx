@@ -119,6 +119,12 @@ export const Header = ({ user }: HeaderProps) => {
                         Tool Dev
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings?tab=manage" className="flex items-center gap-2 cursor-pointer">
+                        <Settings className="h-4 w-4" />
+                        Manage Tools
+                      </Link>
+                    </DropdownMenuItem>
                     {isAdmin && (
                       <DropdownMenuItem asChild>
                         <Link to="/settings?tab=approvals" className="flex items-center gap-2 cursor-pointer">
@@ -219,6 +225,14 @@ export const Header = ({ user }: HeaderProps) => {
                     >
                       <Code className="h-4 w-4" />
                       Tool Dev
+                    </Link>
+                    <Link
+                      to="/settings?tab=manage"
+                      className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2 pl-2"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Settings className="h-4 w-4" />
+                      Manage Tools
                     </Link>
                     {isAdmin && (
                       <Link

@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserRoleManager } from "@/components/UserRoleManager";
 import { ToolCreationForm } from "@/components/ToolCreationForm";
 import { ToolApprovalManager } from "@/components/ToolApprovalManager";
+import { ToolManagement } from "@/components/ToolManagement";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Shield, User, Settings as SettingsIcon, ArrowLeft } from "lucide-react";
@@ -93,6 +94,7 @@ const Settings = () => {
       case "users": return "User Management";
       case "tools": return "Tool Development";
       case "approvals": return "Tool Approvals";
+      case "manage": return "Manage Tools";
       default: return "Settings";
     }
   };
@@ -103,6 +105,7 @@ const Settings = () => {
       case "users": return "Manage user roles and permissions";
       case "tools": return "Create and manage custom AI tools";
       case "approvals": return "Review and approve pending AI tools";
+      case "manage": return "Activate, deactivate, or delete existing tools";
       default: return "Manage your account and system settings";
     }
   };
@@ -178,6 +181,10 @@ const Settings = () => {
 
             {activeTab === "approvals" && isAdmin && (
               <ToolApprovalManager />
+            )}
+
+            {activeTab === "manage" && (isAdmin || isModerator) && (
+              <ToolManagement />
             )}
           </div>
         </div>
