@@ -21,152 +21,16 @@ export default function Auth() {
   });
   const [resetEmail, setResetEmail] = useState("");
   const [showResetForm, setShowResetForm] = useState(false);
-  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmNewPassword, setConfirmNewPassword] = useState("");
-  const [tokenError, setTokenError] = useState(false);
-  const [verifyingRecovery, setVerifyingRecovery] = useState(false);
   
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user && !isPasswordRecovery) {
+    if (user) {
       navigate("/dashboard");
     }
-  }, [user, navigate, isPasswordRecovery]);
-
-  useEffect(() => {
-    // Helper function to wait for session to be established (extended to 10 seconds)
-    const waitForSession = async (intervalMs = 50, maxTries = 200): Promise<boolean> => {
-      for (let i = 0; i < maxTries; i++) {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          return true;
-        }
-        await new Promise(resolve => setTimeout(resolve, intervalMs));
-      }
-      return false;
-    };
-
-    // Check if we're in password recovery mode (user clicked link from email)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setIsPasswordRecovery(true);
-        setTokenError(false);
-        setVerifyingRecovery(false);
-        // Clear URL hash to prevent re-processing
-        window.history.replaceState(null, '', '/auth');
-      }
-    });
-
-    // Check URL for recovery token and handle all formats
-    const checkRecoveryToken = async () => {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const searchParams = new URLSearchParams(window.location.search);
-      
-      const hashType = hashParams.get('type');
-      const hashAccessToken = hashParams.get('access_token');
-      const searchType = searchParams.get('type');
-      const tokenHash = searchParams.get('token_hash');
-      const code = searchParams.get('code');
-      
-      // Handle #access_token=...&type=recovery format
-      if (hashType === 'recovery' && hashAccessToken) {
-        setVerifyingRecovery(true);
-        
-        // Wait for Supabase to process the token and establish session
-        const sessionEstablished = await waitForSession();
-        
-        if (sessionEstablished) {
-          setIsPasswordRecovery(true);
-          setTokenError(false);
-          setVerifyingRecovery(false);
-          window.history.replaceState(null, '', '/auth');
-        } else {
-          setVerifyingRecovery(false);
-          setTokenError(true);
-          toast({
-            title: "Link Expired",
-            description: "This password reset link has expired or is invalid. Please request a new one.",
-            variant: "destructive",
-          });
-        }
-      }
-      // Handle ?token_hash=...&type=recovery format
-      else if (searchType === 'recovery' && tokenHash) {
-        setVerifyingRecovery(true);
-        
-        try {
-          const { error } = await supabase.auth.verifyOtp({
-            type: 'recovery',
-            token_hash: tokenHash,
-          });
-          
-          if (error) {
-            setVerifyingRecovery(false);
-            setTokenError(true);
-            toast({
-              title: "Link Expired",
-              description: "This password reset link has expired or is invalid. Please request a new one.",
-              variant: "destructive",
-            });
-          } else {
-            setIsPasswordRecovery(true);
-            setTokenError(false);
-            setVerifyingRecovery(false);
-            window.history.replaceState(null, '', '/auth');
-          }
-        } catch (err) {
-          setVerifyingRecovery(false);
-          setTokenError(true);
-          toast({
-            title: "Link Error",
-            description: "Failed to verify password reset link. Please request a new one.",
-            variant: "destructive",
-          });
-        }
-      }
-      // Handle ?code=...&type=recovery format
-      else if (searchType === 'recovery' && code) {
-        setVerifyingRecovery(true);
-        
-        try {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          
-          if (error) {
-            setVerifyingRecovery(false);
-            setTokenError(true);
-            toast({
-              title: "Link Expired",
-              description: "This password reset link has expired or is invalid. Please request a new one.",
-              variant: "destructive",
-            });
-          } else {
-            setIsPasswordRecovery(true);
-            setTokenError(false);
-            setVerifyingRecovery(false);
-            window.history.replaceState(null, '', '/auth');
-          }
-        } catch (err) {
-          setVerifyingRecovery(false);
-          setTokenError(true);
-          toast({
-            title: "Link Error",
-            description: "Failed to process password reset link. Please request a new one.",
-            variant: "destructive",
-          });
-        }
-      }
-    };
-
-    checkRecoveryToken();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [toast]);
+  }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -250,7 +114,7 @@ export default function Auth() {
 
     setIsLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${window.location.origin}/auth`,
+      redirectTo: `${window.location.origin}/reset`,
     });
     
     if (error) {
@@ -271,84 +135,6 @@ export default function Auth() {
     setIsLoading(false);
   };
 
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!newPassword || !confirmNewPassword) {
-      toast({
-        title: "Missing fields",
-        description: "Please fill in both password fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword !== confirmNewPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters long",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    
-    // Verify we still have a valid session before attempting update
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError || !sessionData.session) {
-      setIsLoading(false);
-      setTokenError(true);
-      toast({
-        title: "Session Expired",
-        description: "Your password reset session has expired. Please request a new reset link.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Password updated!",
-        description: "Your password has been successfully updated. You can now sign in with your new password.",
-      });
-      setIsPasswordRecovery(false);
-      setNewPassword("");
-      setConfirmNewPassword("");
-      // Clear URL hash
-      window.history.replaceState(null, '', '/auth');
-      navigate("/auth");
-    }
-    
-    setIsLoading(false);
-  };
-
-  const handleRequestNewResetLink = () => {
-    setTokenError(false);
-    setIsPasswordRecovery(false);
-    setShowResetForm(true);
-    // Clear URL hash
-    window.history.replaceState(null, '', '/auth');
-  };
-
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -367,115 +153,20 @@ export default function Auth() {
           </div>
           
           <p className="text-muted-foreground">
-            {isPasswordRecovery ? "Reset your password" : "Access powerful AI tools with our professional platform"}
+            Access powerful AI tools with our professional platform
           </p>
         </div>
 
         {/* Auth Form */}
         <Card className="gradient-card shadow-large border-primary/10">
           <CardHeader className="text-center">
-            <CardTitle>{isPasswordRecovery ? "Set New Password" : "Get Started"}</CardTitle>
+            <CardTitle>Get Started</CardTitle>
             <CardDescription>
-              {isPasswordRecovery ? "Enter your new password below" : "Sign in to your account or create a new one"}
+              Sign in to your account or create a new one
             </CardDescription>
           </CardHeader>
           
           <CardContent>
-            {verifyingRecovery ? (
-              <div className="flex flex-col items-center justify-center py-8 space-y-4">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Verifying your reset link...</p>
-              </div>
-            ) : isPasswordRecovery ? (
-              tokenError ? (
-                <div className="space-y-4 text-center">
-                  <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-                    <p className="text-sm text-destructive font-medium mb-2">
-                      Password Reset Link Expired
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      This link has expired or is invalid. Password reset links are only valid for a short time for security reasons.
-                    </p>
-                  </div>
-                  <Button 
-                    onClick={handleRequestNewResetLink}
-                    variant="hero"
-                    className="w-full"
-                  >
-                    Request New Reset Link
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      setTokenError(false);
-                      setIsPasswordRecovery(false);
-                      window.history.replaceState(null, '', '/auth');
-                    }}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Back to Sign In
-                  </Button>
-                </div>
-              ) : (
-              <form onSubmit={handleUpdatePassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">New Password</Label>
-                  <Input
-                    id="new-password"
-                    type="password"
-                    placeholder="Enter new password (min 6 characters)"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    disabled={isLoading}
-                    required
-                    minLength={6}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-new-password">Confirm New Password</Label>
-                  <Input
-                    id="confirm-new-password"
-                    type="password"
-                    placeholder="Confirm your new password"
-                    value={confirmNewPassword}
-                    onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    disabled={isLoading}
-                    required
-                  />
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  variant="hero"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Updating Password...
-                    </>
-                  ) : (
-                    "Update Password"
-                  )}
-                </Button>
-                
-                <Button 
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setIsPasswordRecovery(false);
-                    setTokenError(false);
-                    window.history.replaceState(null, '', '/auth');
-                  }}
-                  className="w-full"
-                >
-                  Cancel
-                </Button>
-              </form>
-              )
-            ) : (
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -523,7 +214,6 @@ export default function Auth() {
                     <Button 
                       type="submit" 
                       className="w-full" 
-                      variant="hero"
                       disabled={isLoading}
                     >
                       {isLoading ? (
@@ -566,7 +256,6 @@ export default function Auth() {
                       </Button>
                       <Button 
                         type="submit" 
-                        variant="hero"
                         disabled={isLoading}
                         className="flex-1"
                       >
@@ -640,8 +329,7 @@ export default function Auth() {
                   
                   <Button 
                     type="submit" 
-                    className="w-full" 
-                    variant="hero"
+                    className="w-full"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -656,13 +344,6 @@ export default function Auth() {
                 </form>
               </TabsContent>
             </Tabs>
-            )}
-            
-            {!isPasswordRecovery && (
-              <div className="mt-6 text-center text-sm text-muted-foreground">
-                <p>Start with 10 free credits • No credit card required</p>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
