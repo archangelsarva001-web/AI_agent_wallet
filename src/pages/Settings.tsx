@@ -7,14 +7,16 @@ import { UserRoleManager } from "@/components/UserRoleManager";
 import { Badge } from "@/components/ui/badge";
 import { Shield, User, Settings as SettingsIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 
 const Settings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const activeTab = searchParams.get("tab") || "profile";
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -89,10 +91,11 @@ const Settings = () => {
             <p className="text-muted-foreground">Manage your account and system settings</p>
           </div>
 
-          <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
+          <Tabs value={activeTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="profile">Profile</TabsTrigger>
-              {isAdmin && <TabsTrigger value="roles">User Roles</TabsTrigger>}
+              {isAdmin && <TabsTrigger value="users">User Management</TabsTrigger>}
+              {isAdmin && <TabsTrigger value="tools">Tool Dev</TabsTrigger>}
             </TabsList>
 
             <TabsContent value="profile" className="space-y-6">
@@ -138,8 +141,23 @@ const Settings = () => {
             </TabsContent>
 
             {isAdmin && (
-              <TabsContent value="roles" className="space-y-6">
+              <TabsContent value="users" className="space-y-6">
                 <UserRoleManager />
+              </TabsContent>
+            )}
+
+            {isAdmin && (
+              <TabsContent value="tools" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Tool Development</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">
+                      Tool development features coming soon. This section will allow you to create and manage custom AI tools.
+                    </p>
+                  </CardContent>
+                </Card>
               </TabsContent>
             )}
           </Tabs>

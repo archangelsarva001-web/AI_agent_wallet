@@ -3,7 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Menu, X, Zap, Settings } from "lucide-react";
+import { Menu, X, Zap, Settings, User, Users, Code } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   user?: any;
@@ -79,13 +85,32 @@ export const Header = ({ user }: HeaderProps) => {
                 Usage
               </Link>
               {isAdmin && (
-                <Link
-                  to="/settings"
-                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-1"
-                >
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-1 outline-none">
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings?tab=profile" className="flex items-center gap-2 cursor-pointer">
+                        <User className="h-4 w-4" />
+                        Profile Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings?tab=users" className="flex items-center gap-2 cursor-pointer">
+                        <Users className="h-4 w-4" />
+                        User Management
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings?tab=tools" className="flex items-center gap-2 cursor-pointer">
+                        <Code className="h-4 w-4" />
+                        Tool Dev
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
               <Button onClick={handleSignOut} variant="ghost" size="sm">
                 Sign Out
@@ -150,14 +175,32 @@ export const Header = ({ user }: HeaderProps) => {
                   Usage
                 </Link>
                 {isAdmin && (
-                  <Link
-                    to="/settings"
-                    className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-1"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Settings className="h-4 w-4" />
-                    Settings
-                  </Link>
+                  <div className="space-y-2">
+                    <Link
+                      to="/settings?tab=profile"
+                      className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2 pl-2"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <User className="h-4 w-4" />
+                      Profile Settings
+                    </Link>
+                    <Link
+                      to="/settings?tab=users"
+                      className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2 pl-2"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Users className="h-4 w-4" />
+                      User Management
+                    </Link>
+                    <Link
+                      to="/settings?tab=tools"
+                      className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2 pl-2"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Code className="h-4 w-4" />
+                      Tool Dev
+                    </Link>
+                  </div>
                 )}
                 <Button
                   onClick={() => {
