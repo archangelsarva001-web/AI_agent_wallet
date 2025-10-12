@@ -131,8 +131,15 @@ export const ToolManagement = () => {
     }
   };
 
-  const renderToolsList = (filterStatus: string | null = null, filterActive: boolean | null = null) => {
+  const renderToolsList = (filterStatus: string | null = null, filterActive: boolean | null = null, underDevelopment: boolean = false) => {
     let filteredTools = tools;
+    
+    if (underDevelopment) {
+      filteredTools = filteredTools.filter(tool => !tool.webhook_url || tool.webhook_url.trim() === '');
+    } else {
+      // For other tabs, exclude under-development tools
+      filteredTools = filteredTools.filter(tool => tool.webhook_url && tool.webhook_url.trim() !== '');
+    }
     
     if (filterStatus) {
       filteredTools = filteredTools.filter(tool => tool.approval_status === filterStatus);
@@ -219,11 +226,12 @@ export const ToolManagement = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="all">All Tools</TabsTrigger>
               <TabsTrigger value="active">Active</TabsTrigger>
               <TabsTrigger value="inactive">Inactive</TabsTrigger>
               <TabsTrigger value="approved">Approved</TabsTrigger>
+              <TabsTrigger value="development">Under Development</TabsTrigger>
             </TabsList>
             
             <TabsContent value="all" className="mt-4">
@@ -240,6 +248,10 @@ export const ToolManagement = () => {
             
             <TabsContent value="approved" className="mt-4">
               {renderToolsList('approved')}
+            </TabsContent>
+            
+            <TabsContent value="development" className="mt-4">
+              {renderToolsList(null, null, true)}
             </TabsContent>
           </Tabs>
         </CardContent>
