@@ -21,16 +21,28 @@ export default function Auth() {
   });
   const [resetEmail, setResetEmail] = useState("");
   const [showResetForm, setShowResetForm] = useState(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
+    if (user && !isPasswordRecovery) {
       navigate("/dashboard");
     }
-  }, [user, navigate]);
+  }, [user, navigate, isPasswordRecovery]);
+
+  useEffect(() => {
+    // Check if we're in password recovery mode (user clicked link from email)
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordRecovery(true);
+      }
+    });
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,6 +147,57 @@ export default function Auth() {
     setIsLoading(false);
   };
 
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newPassword || !confirmNewPassword) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in both password fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure your passwords match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Password updated!",
+        description: "Your password has been successfully updated",
+      });
+      setIsPasswordRecovery(false);
+      navigate("/dashboard");
+    }
+    
+    setIsLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -153,20 +216,66 @@ export default function Auth() {
           </div>
           
           <p className="text-muted-foreground">
-            Access powerful AI tools with our professional platform
+            {isPasswordRecovery ? "Reset your password" : "Access powerful AI tools with our professional platform"}
           </p>
         </div>
 
         {/* Auth Form */}
         <Card className="gradient-card shadow-large border-primary/10">
           <CardHeader className="text-center">
-            <CardTitle>Get Started</CardTitle>
+            <CardTitle>{isPasswordRecovery ? "Set New Password" : "Get Started"}</CardTitle>
             <CardDescription>
-              Sign in to your account or create a new one
+              {isPasswordRecovery ? "Enter your new password below" : "Sign in to your account or create a new one"}
             </CardDescription>
           </CardHeader>
           
           <CardContent>
+            {isPasswordRecovery ? (
+              <form onSubmit={handleUpdatePassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    placeholder="Enter new password (min 6 characters)"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    disabled={isLoading}
+                    required
+                    minLength={6}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-new-password">Confirm New Password</Label>
+                  <Input
+                    id="confirm-new-password"
+                    type="password"
+                    placeholder="Confirm your new password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    disabled={isLoading}
+                    required
+                  />
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  variant="hero"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating Password...
+                    </>
+                  ) : (
+                    "Update Password"
+                  )}
+                </Button>
+              </form>
+            ) : (
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -347,10 +456,13 @@ export default function Auth() {
                 </form>
               </TabsContent>
             </Tabs>
+            )}
             
-            <div className="mt-6 text-center text-sm text-muted-foreground">
-              <p>Start with 10 free credits • No credit card required</p>
-            </div>
+            {!isPasswordRecovery && (
+              <div className="mt-6 text-center text-sm text-muted-foreground">
+                <p>Start with 10 free credits • No credit card required</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
