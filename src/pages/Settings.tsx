@@ -5,13 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserRoleManager } from "@/components/UserRoleManager";
 import { Badge } from "@/components/ui/badge";
-import { Shield, User, Settings as SettingsIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Shield, User, Settings as SettingsIcon, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Navigate, useSearchParams, useNavigate } from "react-router-dom";
 
 const Settings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -104,6 +106,15 @@ const Settings = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4">
         <div className="max-w-4xl mx-auto">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate(-1)} 
+            className="mb-4 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">{getPageTitle()}</h1>
             <p className="text-muted-foreground">{getPageDescription()}</p>
