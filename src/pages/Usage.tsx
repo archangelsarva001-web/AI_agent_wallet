@@ -214,11 +214,27 @@ export default function Usage() {
               <TabsContent value="credits">
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="hsl(var(--muted-foreground))"
+                      tick={{ fill: "hsl(var(--foreground))" }}
+                    />
+                    <YAxis 
+                      stroke="hsl(var(--muted-foreground))"
+                      tick={{ fill: "hsl(var(--foreground))" }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: "hsl(var(--popover))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                        color: "hsl(var(--popover-foreground))"
+                      }}
+                    />
+                    <Legend 
+                      wrapperStyle={{ color: "hsl(var(--foreground))" }}
+                    />
                     <Line 
                       type="monotone" 
                       dataKey="credits" 
@@ -232,11 +248,27 @@ export default function Usage() {
               <TabsContent value="count">
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="hsl(var(--muted-foreground))"
+                      tick={{ fill: "hsl(var(--foreground))" }}
+                    />
+                    <YAxis 
+                      stroke="hsl(var(--muted-foreground))"
+                      tick={{ fill: "hsl(var(--foreground))" }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: "hsl(var(--popover))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                        color: "hsl(var(--popover-foreground))"
+                      }}
+                    />
+                    <Legend 
+                      wrapperStyle={{ color: "hsl(var(--foreground))" }}
+                    />
                     <Line 
                       type="monotone" 
                       dataKey="count" 
