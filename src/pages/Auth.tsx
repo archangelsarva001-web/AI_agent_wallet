@@ -38,8 +38,8 @@ export default function Auth() {
   }, [user, navigate, isPasswordRecovery]);
 
   useEffect(() => {
-    // Helper function to wait for session to be established
-    const waitForSession = async (intervalMs = 50, maxTries = 100): Promise<boolean> => {
+    // Helper function to wait for session to be established (extended to 10 seconds)
+    const waitForSession = async (intervalMs = 50, maxTries = 200): Promise<boolean> => {
       for (let i = 0; i < maxTries; i++) {
         const { data } = await supabase.auth.getSession();
         if (data.session) {
@@ -61,13 +61,19 @@ export default function Auth() {
       }
     });
 
-    // Check URL hash for recovery token and wait for session
+    // Check URL for recovery token and handle all formats
     const checkRecoveryToken = async () => {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const type = hashParams.get('type');
-      const accessToken = hashParams.get('access_token');
+      const searchParams = new URLSearchParams(window.location.search);
       
-      if (type === 'recovery' && accessToken) {
+      const hashType = hashParams.get('type');
+      const hashAccessToken = hashParams.get('access_token');
+      const searchType = searchParams.get('type');
+      const tokenHash = searchParams.get('token_hash');
+      const code = searchParams.get('code');
+      
+      // Handle #access_token=...&type=recovery format
+      if (hashType === 'recovery' && hashAccessToken) {
         setVerifyingRecovery(true);
         
         // Wait for Supabase to process the token and establish session
@@ -79,12 +85,76 @@ export default function Auth() {
           setVerifyingRecovery(false);
           window.history.replaceState(null, '', '/auth');
         } else {
-          // Timeout - token is likely expired or invalid
           setVerifyingRecovery(false);
           setTokenError(true);
           toast({
             title: "Link Expired",
             description: "This password reset link has expired or is invalid. Please request a new one.",
+            variant: "destructive",
+          });
+        }
+      }
+      // Handle ?token_hash=...&type=recovery format
+      else if (searchType === 'recovery' && tokenHash) {
+        setVerifyingRecovery(true);
+        
+        try {
+          const { error } = await supabase.auth.verifyOtp({
+            type: 'recovery',
+            token_hash: tokenHash,
+          });
+          
+          if (error) {
+            setVerifyingRecovery(false);
+            setTokenError(true);
+            toast({
+              title: "Link Expired",
+              description: "This password reset link has expired or is invalid. Please request a new one.",
+              variant: "destructive",
+            });
+          } else {
+            setIsPasswordRecovery(true);
+            setTokenError(false);
+            setVerifyingRecovery(false);
+            window.history.replaceState(null, '', '/auth');
+          }
+        } catch (err) {
+          setVerifyingRecovery(false);
+          setTokenError(true);
+          toast({
+            title: "Link Error",
+            description: "Failed to verify password reset link. Please request a new one.",
+            variant: "destructive",
+          });
+        }
+      }
+      // Handle ?code=...&type=recovery format
+      else if (searchType === 'recovery' && code) {
+        setVerifyingRecovery(true);
+        
+        try {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (error) {
+            setVerifyingRecovery(false);
+            setTokenError(true);
+            toast({
+              title: "Link Expired",
+              description: "This password reset link has expired or is invalid. Please request a new one.",
+              variant: "destructive",
+            });
+          } else {
+            setIsPasswordRecovery(true);
+            setTokenError(false);
+            setVerifyingRecovery(false);
+            window.history.replaceState(null, '', '/auth');
+          }
+        } catch (err) {
+          setVerifyingRecovery(false);
+          setTokenError(true);
+          toast({
+            title: "Link Error",
+            description: "Failed to process password reset link. Please request a new one.",
             variant: "destructive",
           });
         }
