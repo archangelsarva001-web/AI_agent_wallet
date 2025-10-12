@@ -37,11 +37,24 @@ export default function Auth() {
 
   useEffect(() => {
     // Check if we're in password recovery mode (user clicked link from email)
-    supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth event:', event);
       if (event === 'PASSWORD_RECOVERY') {
+        console.log('Password recovery mode activated');
         setIsPasswordRecovery(true);
       }
     });
+
+    // Also check URL hash for recovery token
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    if (hashParams.get('type') === 'recovery') {
+      console.log('Recovery token found in URL');
+      setIsPasswordRecovery(true);
+    }
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
