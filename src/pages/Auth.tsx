@@ -25,6 +25,7 @@ export default function Auth() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [tokenError, setTokenError] = useState(false);
+  const [verifyingRecovery, setVerifyingRecovery] = useState(false);
   
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -37,40 +38,53 @@ export default function Auth() {
   }, [user, navigate, isPasswordRecovery]);
 
   useEffect(() => {
+    // Helper function to wait for session to be established
+    const waitForSession = async (intervalMs = 50, maxTries = 100): Promise<boolean> => {
+      for (let i = 0; i < maxTries; i++) {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          return true;
+        }
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+      }
+      return false;
+    };
+
     // Check if we're in password recovery mode (user clicked link from email)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsPasswordRecovery(true);
         setTokenError(false);
+        setVerifyingRecovery(false);
+        // Clear URL hash to prevent re-processing
+        window.history.replaceState(null, '', '/auth');
       }
     });
 
-    // Also check URL hash for recovery token
+    // Check URL hash for recovery token and wait for session
     const checkRecoveryToken = async () => {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const type = hashParams.get('type');
       const accessToken = hashParams.get('access_token');
       
       if (type === 'recovery' && accessToken) {
-        // Validate the token by attempting to get the session
-        try {
-          const { data, error } = await supabase.auth.getSession();
-          if (error || !data.session) {
-            setTokenError(true);
-            toast({
-              title: "Link Expired",
-              description: "This password reset link has expired. Please request a new one.",
-              variant: "destructive",
-            });
-          } else {
-            setIsPasswordRecovery(true);
-            setTokenError(false);
-          }
-        } catch (err) {
+        setVerifyingRecovery(true);
+        
+        // Wait for Supabase to process the token and establish session
+        const sessionEstablished = await waitForSession();
+        
+        if (sessionEstablished) {
+          setIsPasswordRecovery(true);
+          setTokenError(false);
+          setVerifyingRecovery(false);
+          window.history.replaceState(null, '', '/auth');
+        } else {
+          // Timeout - token is likely expired or invalid
+          setVerifyingRecovery(false);
           setTokenError(true);
           toast({
-            title: "Invalid Link",
-            description: "This password reset link is invalid. Please request a new one.",
+            title: "Link Expired",
+            description: "This password reset link has expired or is invalid. Please request a new one.",
             variant: "destructive",
           });
         }
@@ -297,7 +311,12 @@ export default function Auth() {
           </CardHeader>
           
           <CardContent>
-            {isPasswordRecovery ? (
+            {verifyingRecovery ? (
+              <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Verifying your reset link...</p>
+              </div>
+            ) : isPasswordRecovery ? (
               tokenError ? (
                 <div className="space-y-4 text-center">
                   <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
