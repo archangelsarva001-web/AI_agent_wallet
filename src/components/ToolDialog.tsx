@@ -103,7 +103,10 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
 
       if (logError) throw logError;
 
-      // Deduct credits (only if not admin with infinite credits)
+      // Process the tool (webhook call if available, otherwise mock)
+      const toolResult = await processToolWithWebhook(tool, formData);
+      
+      // Only deduct credits AFTER successful webhook response (only if not admin with infinite credits)
       if (currentCredits !== 999999) {
         const { error: updateError } = await supabase
           .from("credits")
@@ -114,9 +117,6 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
 
         if (updateError) throw updateError;
       }
-
-      // Process the tool (webhook call if available, otherwise mock)
-      const toolResult = await processToolWithWebhook(tool, formData);
       
       // Update usage log with result
       await supabase
