@@ -179,7 +179,7 @@ const Settings = () => {
               <ToolCreationForm />
             )}
 
-            {activeTab === "approvals" && isAdmin && (
+            {activeTab === "approvals" && (isAdmin || isModerator) && (
               <ToolApprovalManager />
             )}
 
