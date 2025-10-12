@@ -100,7 +100,7 @@ export const Header = ({ user }: HeaderProps) => {
                     <Settings className="h-4 w-4" />
                     Settings
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuContent align="end" className="w-48 bg-popover z-50">
                     <DropdownMenuItem asChild>
                       <Link to="/settings?tab=profile" className="flex items-center gap-2 cursor-pointer">
                         <User className="h-4 w-4" />
