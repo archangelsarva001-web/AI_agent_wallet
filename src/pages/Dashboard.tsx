@@ -29,6 +29,7 @@ interface AITool {
   credit_cost: number;
   input_fields: any;
   icon_url: string;
+  webhook_url: string | null;
 }
 
 const categories = [
@@ -47,6 +48,8 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [tools, setTools] = useState<AITool[]>([]);
   const [filteredTools, setFilteredTools] = useState<AITool[]>([]);
+  const [featuredTools, setFeaturedTools] = useState<AITool[]>([]);
+  const [comingSoonTools, setComingSoonTools] = useState<AITool[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -75,6 +78,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     filterTools();
+    separateToolsByWebhook();
   }, [tools, searchTerm, selectedCategory]);
 
   const fetchUserRole = async () => {
@@ -115,6 +119,13 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const separateToolsByWebhook = () => {
+    const featured = tools.filter(tool => tool.webhook_url);
+    const comingSoon = tools.filter(tool => !tool.webhook_url);
+    setFeaturedTools(featured);
+    setComingSoonTools(comingSoon);
   };
 
   const filterTools = () => {
@@ -332,31 +343,85 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Tools Grid */}
-        <section>
-          {filteredTools.length === 0 ? (
-            <Card className="text-center py-12">
-              <CardContent>
-                <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <CardTitle className="mb-2">No tools found</CardTitle>
-                <CardDescription>
-                  Try adjusting your search or filter criteria
-                </CardDescription>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredTools.map((tool) => (
-                <ToolCard
-                  key={tool.id}
-                  tool={tool}
-                  credits={credits}
-                  onUse={() => setSelectedTool(tool)}
-                />
-              ))}
-            </div>
-          )}
-        </section>
+        {/* Tools Grid - Show filtered or separated view */}
+        {searchTerm || selectedCategory !== "All" ? (
+          <section>
+            {filteredTools.length === 0 ? (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <CardTitle className="mb-2">No tools found</CardTitle>
+                  <CardDescription>
+                    Try adjusting your search or filter criteria
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredTools.map((tool) => (
+                  <ToolCard
+                    key={tool.id}
+                    tool={tool}
+                    credits={credits}
+                    onUse={() => setSelectedTool(tool)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        ) : (
+          <>
+            {/* Featured Tools */}
+            {featuredTools.length > 0 && (
+              <section className="mb-12">
+                <div className="flex items-center gap-2 mb-6">
+                  <Zap className="h-6 w-6 text-primary" />
+                  <h2 className="text-2xl font-bold">Featured Tools</h2>
+                  <Badge variant="default">Live</Badge>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {featuredTools.map((tool) => (
+                    <ToolCard
+                      key={tool.id}
+                      tool={tool}
+                      credits={credits}
+                      onUse={() => setSelectedTool(tool)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Coming Soon Tools */}
+            {comingSoonTools.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 mb-6">
+                  <AlertCircle className="h-6 w-6 text-muted-foreground" />
+                  <h2 className="text-2xl font-bold">Coming Soon</h2>
+                  <Badge variant="secondary">In Development</Badge>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {comingSoonTools.map((tool) => (
+                    <div key={tool.id} className="relative">
+                      <div className="opacity-60 pointer-events-none">
+                        <ToolCard
+                          tool={tool}
+                          credits={credits}
+                          onUse={() => {}}
+                        />
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Badge variant="outline" className="bg-background/90 backdrop-blur-sm">
+                          Coming Soon
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
       </main>
 
       {/* Tool Dialog */}
