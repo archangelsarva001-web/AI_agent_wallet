@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserRoleManager } from "@/components/UserRoleManager";
+import { ToolCreationForm } from "@/components/ToolCreationForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Shield, User, Settings as SettingsIcon, ArrowLeft } from "lucide-react";
@@ -17,6 +18,7 @@ const Settings = () => {
   const [searchParams] = useSearchParams();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isModerator, setIsModerator] = useState(false);
   const [loading, setLoading] = useState(true);
   const activeTab = searchParams.get("tab") || "profile";
 
@@ -28,7 +30,6 @@ const Settings = () => {
       }
 
       try {
-        // Check if user is admin
         const { data: adminCheck } = await supabase.rpc('is_admin', {
           _user_id: user.id
         });
@@ -39,6 +40,7 @@ const Settings = () => {
           _user_id: user.id
         });
         setUserRole(role);
+        setIsModerator(role === 'moderator');
       } catch (error) {
         console.error('Error checking admin status:', error);
         toast({
@@ -167,17 +169,8 @@ const Settings = () => {
               <UserRoleManager />
             )}
 
-            {activeTab === "tools" && isAdmin && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Tool Development</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Tool development features coming soon. This section will allow you to create and manage custom AI tools.
-                  </p>
-                </CardContent>
-              </Card>
+            {activeTab === "tools" && (isAdmin || isModerator) && (
+              <ToolCreationForm />
             )}
           </div>
         </div>

@@ -18,6 +18,7 @@ interface HeaderProps {
 export const Header = ({ user }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isModerator, setIsModerator] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -25,6 +26,7 @@ export const Header = ({ user }: HeaderProps) => {
     const checkAdminStatus = async () => {
       if (!user) {
         setIsAdmin(false);
+        setIsModerator(false);
         return;
       }
 
@@ -33,9 +35,15 @@ export const Header = ({ user }: HeaderProps) => {
           _user_id: user.id
         });
         setIsAdmin(adminCheck || false);
+
+        const { data: role } = await supabase.rpc('get_user_role', {
+          _user_id: user.id
+        });
+        setIsModerator(role === 'moderator');
       } catch (error) {
         console.error('Error checking admin status:', error);
         setIsAdmin(false);
+        setIsModerator(false);
       }
     };
 
@@ -84,7 +92,7 @@ export const Header = ({ user }: HeaderProps) => {
               >
                 Usage
               </Link>
-              {isAdmin && (
+              {(isAdmin || isModerator) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-1 outline-none">
                     <Settings className="h-4 w-4" />
@@ -97,12 +105,14 @@ export const Header = ({ user }: HeaderProps) => {
                         Profile Settings
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/settings?tab=users" className="flex items-center gap-2 cursor-pointer">
-                        <Users className="h-4 w-4" />
-                        User Management
-                      </Link>
-                    </DropdownMenuItem>
+                    {isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/settings?tab=users" className="flex items-center gap-2 cursor-pointer">
+                          <Users className="h-4 w-4" />
+                          User Management
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem asChild>
                       <Link to="/settings?tab=tools" className="flex items-center gap-2 cursor-pointer">
                         <Code className="h-4 w-4" />
@@ -174,7 +184,7 @@ export const Header = ({ user }: HeaderProps) => {
                 >
                   Usage
                 </Link>
-                {isAdmin && (
+                {(isAdmin || isModerator) && (
                   <div className="space-y-2">
                     <Link
                       to="/settings?tab=profile"
@@ -184,14 +194,16 @@ export const Header = ({ user }: HeaderProps) => {
                       <User className="h-4 w-4" />
                       Profile Settings
                     </Link>
-                    <Link
-                      to="/settings?tab=users"
-                      className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2 pl-2"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <Users className="h-4 w-4" />
-                      User Management
-                    </Link>
+                    {isAdmin && (
+                      <Link
+                        to="/settings?tab=users"
+                        className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2 pl-2"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Users className="h-4 w-4" />
+                        User Management
+                      </Link>
+                    )}
                     <Link
                       to="/settings?tab=tools"
                       className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2 pl-2"
