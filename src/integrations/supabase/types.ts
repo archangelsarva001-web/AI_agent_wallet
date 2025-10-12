@@ -279,6 +279,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          is_active: boolean
           is_subscribed: boolean | null
           stripe_customer_id: string | null
         }
@@ -287,6 +288,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          is_active?: boolean
           is_subscribed?: boolean | null
           stripe_customer_id?: string | null
         }
@@ -295,6 +297,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          is_active?: boolean
           is_subscribed?: boolean | null
           stripe_customer_id?: string | null
         }
@@ -355,6 +358,10 @@ export type Database = {
       sanitize_input: {
         Args: { input: string }
         Returns: string
+      }
+      toggle_user_status: {
+        Args: { _is_active: boolean; _user_id: string }
+        Returns: boolean
       }
       update_user_role: {
         Args: {
