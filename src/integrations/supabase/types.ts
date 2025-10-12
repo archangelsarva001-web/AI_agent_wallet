@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       ai_tools: {
         Row: {
+          approval_status: Database["public"]["Enums"]["approval_status"]
           category: string
           created_at: string
           credit_cost: number
@@ -25,10 +26,13 @@ export type Database = {
           input_fields: Json
           is_active: boolean
           name: string
+          reviewed_at: string | null
+          reviewed_by: string | null
           updated_at: string
           webhook_url: string | null
         }
         Insert: {
+          approval_status?: Database["public"]["Enums"]["approval_status"]
           category: string
           created_at?: string
           credit_cost?: number
@@ -38,10 +42,13 @@ export type Database = {
           input_fields?: Json
           is_active?: boolean
           name: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           updated_at?: string
           webhook_url?: string | null
         }
         Update: {
+          approval_status?: Database["public"]["Enums"]["approval_status"]
           category?: string
           created_at?: string
           credit_cost?: number
@@ -51,6 +58,8 @@ export type Database = {
           input_fields?: Json
           is_active?: boolean
           name?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           updated_at?: string
           webhook_url?: string | null
         }
@@ -361,6 +370,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      approval_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -489,6 +499,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      approval_status: ["pending", "approved", "rejected"],
     },
   },
 } as const

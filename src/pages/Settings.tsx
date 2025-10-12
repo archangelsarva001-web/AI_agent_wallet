@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserRoleManager } from "@/components/UserRoleManager";
 import { ToolCreationForm } from "@/components/ToolCreationForm";
+import { ToolApprovalManager } from "@/components/ToolApprovalManager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Shield, User, Settings as SettingsIcon, ArrowLeft } from "lucide-react";
@@ -91,6 +92,7 @@ const Settings = () => {
       case "profile": return "Profile Settings";
       case "users": return "User Management";
       case "tools": return "Tool Development";
+      case "approvals": return "Tool Approvals";
       default: return "Settings";
     }
   };
@@ -100,6 +102,7 @@ const Settings = () => {
       case "profile": return "Manage your personal profile information";
       case "users": return "Manage user roles and permissions";
       case "tools": return "Create and manage custom AI tools";
+      case "approvals": return "Review and approve pending AI tools";
       default: return "Manage your account and system settings";
     }
   };
@@ -171,6 +174,10 @@ const Settings = () => {
 
             {activeTab === "tools" && (isAdmin || isModerator) && (
               <ToolCreationForm />
+            )}
+
+            {activeTab === "approvals" && isAdmin && (
+              <ToolApprovalManager />
             )}
           </div>
         </div>

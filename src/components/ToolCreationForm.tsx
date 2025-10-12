@@ -127,13 +127,14 @@ export const ToolCreationForm = () => {
         credit_cost: parseInt(creditCost),
         input_fields: inputFieldsData,
         is_active: true,
+        approval_status: 'pending'
       });
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "AI tool created successfully",
+        description: "AI tool submitted for approval. An admin will review it shortly.",
       });
 
       // Reset form
