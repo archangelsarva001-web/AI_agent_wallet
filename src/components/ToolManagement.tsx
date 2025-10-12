@@ -3,9 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Power, Trash2, Eye, PowerOff } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Power, Trash2, Eye, PowerOff, Edit, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,12 +36,78 @@ interface Tool {
   created_at: string;
 }
 
+interface InputField {
+  id?: string;
+  name: string;
+  type: string;
+  label: string;
+  placeholder: string;
+  required: boolean;
+}
+
+const fieldTypes = [
+  { value: "text", label: "Text" },
+  { value: "textarea", label: "Textarea" },
+  { value: "number", label: "Number" },
+  { value: "email", label: "Email" },
+  { value: "url", label: "URL" },
+  { value: "date", label: "Date" },
+  { value: "file", label: "File Upload" },
+];
+
+const categories = [
+  "Text Processing",
+  "Image Generation",
+  "Language Processing",
+  "Development",
+  "Marketing",
+  "Communication",
+  "Sales"
+];
+
 export const ToolManagement = () => {
   const [tools, setTools] = useState<Tool[]>([]);
   const [loading, setLoading] = useState(true);
   const [previewTool, setPreviewTool] = useState<Tool | null>(null);
   const [deleteToolId, setDeleteToolId] = useState<string | null>(null);
+  const [editTool, setEditTool] = useState<Tool | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+  
+  // Edit form state
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editWebhookUrl, setEditWebhookUrl] = useState("");
+  const [editIconUrl, setEditIconUrl] = useState("");
+  const [editCreditCost, setEditCreditCost] = useState("1");
+  const [editInputFields, setEditInputFields] = useState<InputField[]>([]);
+  
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (editTool) {
+      setEditName(editTool.name);
+      setEditDescription(editTool.description);
+      setEditCategory(editTool.category);
+      setEditWebhookUrl(editTool.webhook_url || "");
+      setEditIconUrl(editTool.icon_url || "");
+      setEditCreditCost(editTool.credit_cost.toString());
+      
+      // Transform input fields to add IDs if they don't have them
+      const fieldsWithIds = (editTool.input_fields || []).map((field: any) => ({
+        ...field,
+        id: field.id || crypto.randomUUID()
+      }));
+      setEditInputFields(fieldsWithIds.length > 0 ? fieldsWithIds : [{
+        id: crypto.randomUUID(),
+        name: "",
+        type: "text",
+        label: "",
+        placeholder: "",
+        required: true,
+      }]);
+    }
+  }, [editTool]);
 
   useEffect(() => {
     fetchTools();
@@ -114,6 +184,93 @@ export const ToolManagement = () => {
     }
   };
 
+  const addEditInputField = () => {
+    setEditInputFields([
+      ...editInputFields,
+      {
+        id: crypto.randomUUID(),
+        name: "",
+        type: "text",
+        label: "",
+        placeholder: "",
+        required: true,
+      },
+    ]);
+  };
+
+  const removeEditInputField = (id: string) => {
+    if (editInputFields.length > 1) {
+      setEditInputFields(editInputFields.filter((field) => field.id !== id));
+    }
+  };
+
+  const updateEditInputField = (id: string, key: keyof InputField, value: any) => {
+    setEditInputFields(
+      editInputFields.map((field) =>
+        field.id === id ? { ...field, [key]: value } : field
+      )
+    );
+  };
+
+  const handleEditTool = async () => {
+    if (!editTool || !editName || !editDescription || !editCategory) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please fill in all required fields"
+      });
+      return;
+    }
+
+    // Validate input fields
+    for (const field of editInputFields) {
+      if (!field.name || !field.label) {
+        toast({
+          variant: "destructive",
+          title: "Validation Error",
+          description: "All input fields must have a name and label"
+        });
+        return;
+      }
+    }
+
+    setEditLoading(true);
+    try {
+      const inputFieldsData = editInputFields.map(({ id, ...field }) => field);
+
+      const { error } = await supabase
+        .from('ai_tools')
+        .update({
+          name: editName,
+          description: editDescription,
+          category: editCategory,
+          webhook_url: editWebhookUrl || null,
+          icon_url: editIconUrl || null,
+          credit_cost: parseInt(editCreditCost),
+          input_fields: inputFieldsData,
+        })
+        .eq('id', editTool.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Tool updated successfully"
+      });
+
+      setEditTool(null);
+      fetchTools();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to update tool"
+      });
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
   const getStatusBadge = (status: string, isActive: boolean) => {
     if (!isActive) {
       return <Badge variant="secondary">Inactive</Badge>;
@@ -177,6 +334,14 @@ export const ToolManagement = () => {
               >
                 <Eye className="w-4 h-4 mr-2" />
                 Preview
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditTool(tool)}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
               </Button>
               <Button
                 variant={tool.is_active ? "secondary" : "default"}
@@ -328,6 +493,199 @@ export const ToolManagement = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Tool Dialog */}
+      <Dialog open={!!editTool} onOpenChange={() => setEditTool(null)}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Tool</DialogTitle>
+            <DialogDescription>
+              Update the tool's information and configuration
+            </DialogDescription>
+          </DialogHeader>
+          {editTool && (
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Basic Information</h3>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="editToolName">Tool Name *</Label>
+                  <Input
+                    id="editToolName"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="e.g., LinkedIn Post Generator"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="editToolDescription">Description *</Label>
+                  <Textarea
+                    id="editToolDescription"
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="Describe what this tool does..."
+                    rows={3}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editToolCategory">Category *</Label>
+                    <Select value={editCategory} onValueChange={setEditCategory} required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="editCreditCost">Credit Cost *</Label>
+                    <Input
+                      id="editCreditCost"
+                      type="number"
+                      min="1"
+                      value={editCreditCost}
+                      onChange={(e) => setEditCreditCost(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="editWebhookUrl">Webhook URL</Label>
+                  <Input
+                    id="editWebhookUrl"
+                    type="url"
+                    value={editWebhookUrl}
+                    onChange={(e) => setEditWebhookUrl(e.target.value)}
+                    placeholder="https://your-webhook-endpoint.com/api"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="editIconUrl">Icon URL (optional)</Label>
+                  <Input
+                    id="editIconUrl"
+                    type="url"
+                    value={editIconUrl}
+                    onChange={(e) => setEditIconUrl(e.target.value)}
+                    placeholder="https://example.com/icon.png"
+                  />
+                </div>
+              </div>
+
+              {/* Input Fields Configuration */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Input Fields</h3>
+                  <Button type="button" onClick={addEditInputField} size="sm" variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Field
+                  </Button>
+                </div>
+
+                {editInputFields.map((field, index) => (
+                  <Card key={field.id} className="p-4">
+                    <div className="flex items-start justify-between mb-4">
+                      <h4 className="font-medium">Field {index + 1}</h4>
+                      {editInputFields.length > 1 && (
+                        <Button
+                          type="button"
+                          onClick={() => removeEditInputField(field.id!)}
+                          size="sm"
+                          variant="ghost"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Field Name *</Label>
+                        <Input
+                          value={field.name}
+                          onChange={(e) => updateEditInputField(field.id!, "name", e.target.value)}
+                          placeholder="e.g., topic"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Field Type *</Label>
+                        <Select
+                          value={field.type}
+                          onValueChange={(value) => updateEditInputField(field.id!, "type", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {fieldTypes.map((type) => (
+                              <SelectItem key={type.value} value={type.value}>
+                                {type.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Label *</Label>
+                        <Input
+                          value={field.label}
+                          onChange={(e) => updateEditInputField(field.id!, "label", e.target.value)}
+                          placeholder="e.g., Topic"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Placeholder</Label>
+                        <Input
+                          value={field.placeholder}
+                          onChange={(e) => updateEditInputField(field.id!, "placeholder", e.target.value)}
+                          placeholder="e.g., Enter topic..."
+                        />
+                      </div>
+
+                      <div className="flex items-center space-x-2 col-span-2">
+                        <input
+                          type="checkbox"
+                          id={`edit-required-${field.id}`}
+                          checked={field.required}
+                          onChange={(e) => updateEditInputField(field.id!, "required", e.target.checked)}
+                          className="h-4 w-4"
+                        />
+                        <Label htmlFor={`edit-required-${field.id}`}>Required field</Label>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTool(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditTool} disabled={editLoading}>
+              {editLoading ? "Updating..." : "Update Tool"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
