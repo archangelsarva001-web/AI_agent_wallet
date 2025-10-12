@@ -238,8 +238,10 @@ export default function Usage() {
                     <Line 
                       type="monotone" 
                       dataKey="credits" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={2}
+                      stroke="#4F9BFF" 
+                      strokeWidth={3}
+                      dot={{ fill: "#4F9BFF", r: 4 }}
+                      activeDot={{ r: 6 }}
                       name="Credits Used"
                     />
                   </LineChart>
@@ -272,8 +274,10 @@ export default function Usage() {
                     <Line 
                       type="monotone" 
                       dataKey="count" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={2}
+                      stroke="#4F9BFF" 
+                      strokeWidth={3}
+                      dot={{ fill: "#4F9BFF", r: 4 }}
+                      activeDot={{ r: 6 }}
                       name="Usage Count"
                     />
                   </LineChart>
