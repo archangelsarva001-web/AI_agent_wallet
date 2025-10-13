@@ -143,7 +143,7 @@ export const Header = ({ user }: HeaderProps) => {
           ) : (
             <>
               <Link
-                to="/auth"
+                to="/features"
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 Features
@@ -262,7 +262,7 @@ export const Header = ({ user }: HeaderProps) => {
             ) : (
               <>
                 <Link
-                  to="/auth"
+                  to="/features"
                   className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                   onClick={() => setIsMenuOpen(false)}
                 >
