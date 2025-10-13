@@ -152,7 +152,7 @@ export default function Auth() {
             <div className="flex items-center justify-center w-10 h-10 rounded-xl gradient-primary">
               <Zap className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold">AI Tools Hub</h1>
+            <h1 className="text-2xl font-bold">AutoHub</h1>
           </div>
           
           <p className="text-muted-foreground">

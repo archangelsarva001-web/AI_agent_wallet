@@ -74,7 +74,7 @@ export const Header = ({ user }: HeaderProps) => {
           <div className="flex items-center justify-center w-8 h-8 rounded-lg gradient-primary">
             <Zap className="h-5 w-5 text-white" />
           </div>
-          <span className="text-xl font-bold">AI Tools Hub</span>
+          <span className="text-xl font-bold">AutoHub</span>
         </Link>
 
         {/* Desktop Navigation */}

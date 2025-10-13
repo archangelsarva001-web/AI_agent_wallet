@@ -10,7 +10,7 @@ export const HeroSection = () => {
       <div className="absolute inset-0 z-0">
         <img
           src={heroImage}
-          alt="AI Tools Hub"
+          alt="AutoHub"
           className="w-full h-full object-cover opacity-20"
         />
         <div className="absolute inset-0 gradient-subtle" />

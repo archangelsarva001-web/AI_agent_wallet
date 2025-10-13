@@ -31,15 +31,15 @@ const Index = () => {
           <div className="text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg gradient-primary">
-                <span className="text-white font-bold">AI</span>
+                <span className="text-white font-bold">AH</span>
               </div>
-              <span className="text-xl font-bold">AI Tools Hub</span>
+              <span className="text-xl font-bold">AutoHub</span>
             </div>
             <p className="text-muted-foreground mb-4">
               Supercharge your workflow with powerful AI tools
             </p>
             <p className="text-sm text-muted-foreground">
-              © 2024 AI Tools Hub. All rights reserved.
+              © 2024 AutoHub. All rights reserved.
             </p>
           </div>
         </div>
