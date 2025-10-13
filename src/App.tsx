@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
 import ResetPassword from "./pages/ResetPassword";
 import Usage from "./pages/Usage";
+import Features from "./pages/Features";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/reset" element={<ResetPassword />} />
             <Route path="/usage" element={<Usage />} />
+            <Route path="/features" element={<Features />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
