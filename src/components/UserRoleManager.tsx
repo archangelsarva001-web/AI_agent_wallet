@@ -172,27 +172,21 @@ export const UserRoleManager = () => {
 
     setAddingUser(true);
     try {
-      // Create the user account
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: newUserEmail,
-        password: newUserPassword,
-        email_confirm: true,
-        user_metadata: {
-          full_name: newUserFullName || null
+      // Call admin edge function to create user
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: {
+          action: 'create',
+          data: {
+            email: newUserEmail,
+            password: newUserPassword,
+            full_name: newUserFullName || null,
+            role: newUserRole
+          }
         }
       });
 
-      if (authError) throw authError;
-
-      // Assign the role
-      if (authData.user) {
-        const { error: roleError } = await supabase.rpc('update_user_role', {
-          _target_user_id: authData.user.id,
-          _new_role: newUserRole
-        });
-
-        if (roleError) throw roleError;
-      }
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast({
         title: "Success",
@@ -222,9 +216,16 @@ export const UserRoleManager = () => {
 
     setDeletingUser(true);
     try {
-      const { error } = await supabase.auth.admin.deleteUser(deleteUserId);
+      // Call admin edge function to delete user
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: {
+          action: 'delete',
+          userId: deleteUserId
+        }
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast({
         title: "Success",

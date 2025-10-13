@@ -61,8 +61,28 @@ serve(async (req) => {
     }
 
     const creditsToAdd = parseInt(recentPayment.metadata.credits_amount);
+    const sessionId = recentPayment.id;
     
-    // Check if we already processed this payment
+    // Check if we already processed this payment (idempotency check)
+    const { data: existingLog } = await supabaseClient
+      .from('audit_logs')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('action', 'credits_purchased')
+      .contains('new_values', { stripe_session_id: sessionId })
+      .single();
+
+    if (existingLog) {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        message: "Payment already processed" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Get existing credits
     const { data: existingRecord } = await supabaseClient
       .from('credits')
       .select('current_credits, total_purchased, last_purchase_date')
@@ -82,7 +102,7 @@ serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    // Log the purchase
+    // Log the purchase (this also serves as our idempotency record)
     await supabaseClient.from('audit_logs').insert({
       user_id: user.id,
       action: 'credits_purchased',
@@ -90,7 +110,7 @@ serve(async (req) => {
       resource_id: user.id,
       new_values: {
         credits_added: creditsToAdd,
-        stripe_session_id: recentPayment.id,
+        stripe_session_id: sessionId,
         amount_paid: recentPayment.amount_total
       }
     });

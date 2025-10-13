@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Play, CheckCircle, XCircle, Zap } from "lucide-react";
+import { z } from "zod";
 
 interface AITool {
   id: string;
@@ -67,6 +68,50 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
         
         if (!acceptedTypes.includes(fileExtension)) {
           throw new Error(`Invalid file type. Please upload a ${acceptedTypes.join(' or ')} file`);
+        }
+      }
+
+      // Comprehensive input validation using zod
+      const value = formData[fieldName];
+      if (value !== undefined && value !== null && value !== '' && !(value instanceof File)) {
+        try {
+          // Validate string inputs
+          if (typeof value === 'string') {
+            // Email validation
+            if (field.type === 'email' || fieldName.toLowerCase().includes('email')) {
+              z.string().email().max(255).parse(value);
+            }
+            // URL validation
+            else if (field.type === 'url' || fieldName.toLowerCase().includes('url')) {
+              z.string().url().max(2000).parse(value);
+            }
+            // General text validation with length limits
+            else if (field.type === 'textarea') {
+              z.string().max(10000, 'Text is too long (max 10000 characters)').parse(value);
+            }
+            else {
+              z.string().max(1000, 'Input is too long (max 1000 characters)').parse(value);
+            }
+          }
+          // Validate numeric inputs
+          else if (typeof value === 'number') {
+            z.number().int().min(-1000000).max(1000000).parse(value);
+          }
+        } catch (validationError) {
+          if (validationError instanceof z.ZodError) {
+            throw new Error(`${field.label || fieldName}: ${validationError.errors[0].message}`);
+          }
+        }
+      }
+
+      // Sanitize file names
+      if (field.type === 'file' && formData[fieldName]) {
+        const file = formData[fieldName];
+        const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        if (sanitizedName !== file.name) {
+          // Create a new file with sanitized name
+          const sanitizedFile = new File([file], sanitizedName, { type: file.type });
+          setFormData(prev => ({ ...prev, [fieldName]: sanitizedFile }));
         }
       }
     }
@@ -193,11 +238,10 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
       headers['Content-Type'] = 'application/json';
     }
 
-    console.log('🚀 [WEBHOOK DEBUG] Starting webhook call:', {
-      url: tool.webhook_url,
-      hasFiles: hasFiles,
-      timestamp: new Date().toISOString()
-    });
+    // Environment-gated logging (only in development)
+    if (import.meta.env.DEV) {
+      console.log('Starting webhook call');
+    }
 
     try {
       const controller = new AbortController();
@@ -211,43 +255,20 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
       });
 
       clearTimeout(timeoutId);
-      const responseTime = Date.now() - startTime;
-
-      console.log('📡 [WEBHOOK DEBUG] Response received:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        responseTime: `${responseTime}ms`,
-        ok: response.ok
-      });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ [WEBHOOK DEBUG] Response not OK:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorBody: errorText
-        });
-        throw new Error(`Webhook failed: ${response.status} ${response.statusText}${errorText ? ` - ${errorText}` : ''}`);
+        throw new Error(`Webhook failed: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
-      console.log('✅ [WEBHOOK DEBUG] Success response:', {
-        result: result,
-        responseTime: `${responseTime}ms`
-      });
+      
+      if (import.meta.env.DEV) {
+        console.log('Webhook completed successfully');
+      }
 
       return result;
     } catch (error) {
-      const responseTime = Date.now() - startTime;
-      
-      console.error('💥 [WEBHOOK DEBUG] Webhook error details:', {
-        error: error,
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        responseTime: `${responseTime}ms`,
-        url: tool.webhook_url
-      });
 
       // Create user-friendly error messages
       if (error instanceof Error && error.name === 'AbortError') {
