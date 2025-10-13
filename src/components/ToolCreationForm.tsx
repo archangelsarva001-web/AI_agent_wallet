@@ -9,6 +9,52 @@ import { Plus, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+// Validation function to prevent SSRF attacks
+const isValidWebhookUrl = (url: string): { valid: boolean; error?: string } => {
+  if (!url) return { valid: true }; // Optional field
+  
+  try {
+    const parsed = new URL(url);
+    
+    // Only allow https for security
+    if (parsed.protocol !== 'https:') {
+      return { valid: false, error: 'Webhook URL must use HTTPS protocol' };
+    }
+    
+    // Block private IP ranges and localhost to prevent SSRF
+    const hostname = parsed.hostname.toLowerCase();
+    
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]') {
+      return { valid: false, error: 'Localhost URLs are not allowed' };
+    }
+    
+    // Block private IPv4 ranges
+    if (hostname.match(/^192\.168\./)) {
+      return { valid: false, error: 'Private IP addresses are not allowed' };
+    }
+    if (hostname.match(/^10\./)) {
+      return { valid: false, error: 'Private IP addresses are not allowed' };
+    }
+    if (hostname.match(/^172\.(1[6-9]|2[0-9]|3[0-1])\./)) {
+      return { valid: false, error: 'Private IP addresses are not allowed' };
+    }
+    
+    // Block AWS metadata endpoint
+    if (hostname === '169.254.169.254') {
+      return { valid: false, error: 'Metadata endpoints are not allowed' };
+    }
+    
+    // Block link-local addresses
+    if (hostname.match(/^169\.254\./)) {
+      return { valid: false, error: 'Link-local addresses are not allowed' };
+    }
+    
+    return { valid: true };
+  } catch {
+    return { valid: false, error: 'Invalid URL format' };
+  }
+};
+
 interface InputField {
   id: string;
   name: string;
@@ -96,6 +142,18 @@ export const ToolCreationForm = () => {
         variant: "destructive",
         title: "Validation Error",
         description: "Please fill in all required fields",
+      });
+      setLoading(false);
+      return;
+    }
+
+    // Validate webhook URL to prevent SSRF attacks
+    const webhookValidation = isValidWebhookUrl(webhookUrl);
+    if (!webhookValidation.valid) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Webhook URL",
+        description: webhookValidation.error,
       });
       setLoading(false);
       return;
