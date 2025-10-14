@@ -85,15 +85,64 @@ const categories = [
 ];
 
 const outputTypes = [
-  { value: "smart", label: "Smart (Auto-detect)" },
-  { value: "text", label: "Text" },
-  { value: "json", label: "JSON" },
-  { value: "csv", label: "CSV" },
-  { value: "excel", label: "Excel" },
-  { value: "image", label: "Image" },
-  { value: "pdf", label: "PDF" },
-  { value: "html", label: "HTML" },
-  { value: "file", label: "Generic File" },
+  { value: "smart", label: "Smart (Auto-detect)", category: "Auto" },
+  
+  // Text & Documents
+  { value: "text", label: "Plain Text (.txt)", category: "Text & Documents" },
+  { value: "markdown", label: "Markdown (.md)", category: "Text & Documents" },
+  { value: "rtf", label: "Rich Text Format (.rtf)", category: "Text & Documents" },
+  { value: "doc", label: "Word Document (.doc/.docx)", category: "Text & Documents" },
+  { value: "odt", label: "OpenDocument Text (.odt)", category: "Text & Documents" },
+  { value: "pdf", label: "PDF Document", category: "Text & Documents" },
+  
+  // Data Formats
+  { value: "json", label: "JSON", category: "Data Formats" },
+  { value: "xml", label: "XML", category: "Data Formats" },
+  { value: "yaml", label: "YAML", category: "Data Formats" },
+  { value: "csv", label: "CSV (Comma Separated)", category: "Data Formats" },
+  { value: "tsv", label: "TSV (Tab Separated)", category: "Data Formats" },
+  { value: "excel", label: "Excel (.xlsx/.xls)", category: "Data Formats" },
+  
+  // Images
+  { value: "png", label: "PNG Image", category: "Images" },
+  { value: "jpg", label: "JPEG Image", category: "Images" },
+  { value: "gif", label: "GIF Image", category: "Images" },
+  { value: "svg", label: "SVG Vector", category: "Images" },
+  { value: "webp", label: "WebP Image", category: "Images" },
+  { value: "bmp", label: "Bitmap Image", category: "Images" },
+  { value: "tiff", label: "TIFF Image", category: "Images" },
+  
+  // Web & Code
+  { value: "html", label: "HTML", category: "Web & Code" },
+  { value: "css", label: "CSS", category: "Web & Code" },
+  { value: "javascript", label: "JavaScript", category: "Web & Code" },
+  { value: "typescript", label: "TypeScript", category: "Web & Code" },
+  { value: "python", label: "Python", category: "Web & Code" },
+  { value: "java", label: "Java", category: "Web & Code" },
+  { value: "cpp", label: "C/C++", category: "Web & Code" },
+  
+  // Media
+  { value: "mp4", label: "MP4 Video", category: "Media" },
+  { value: "avi", label: "AVI Video", category: "Media" },
+  { value: "mov", label: "MOV Video", category: "Media" },
+  { value: "mp3", label: "MP3 Audio", category: "Media" },
+  { value: "wav", label: "WAV Audio", category: "Media" },
+  { value: "ogg", label: "OGG Audio", category: "Media" },
+  
+  // Archives
+  { value: "zip", label: "ZIP Archive", category: "Archives" },
+  { value: "tar", label: "TAR Archive", category: "Archives" },
+  { value: "gz", label: "GZIP Archive", category: "Archives" },
+  { value: "rar", label: "RAR Archive", category: "Archives" },
+  
+  // Presentations
+  { value: "ppt", label: "PowerPoint (.ppt/.pptx)", category: "Presentations" },
+  { value: "odp", label: "OpenDocument Presentation", category: "Presentations" },
+  
+  // Other
+  { value: "epub", label: "EPUB eBook", category: "Other" },
+  { value: "binary", label: "Binary File", category: "Other" },
+  { value: "file", label: "Generic File", category: "Other" },
 ];
 
 export const ToolCreationForm = () => {
@@ -335,11 +384,25 @@ export const ToolCreationForm = () => {
                 <SelectTrigger>
                   <SelectValue placeholder="Select output type" />
                 </SelectTrigger>
-                <SelectContent>
-                  {outputTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
+                <SelectContent className="max-h-[300px]">
+                  {Object.entries(
+                    outputTypes.reduce((acc, type) => {
+                      const cat = type.category || "Other";
+                      if (!acc[cat]) acc[cat] = [];
+                      acc[cat].push(type);
+                      return acc;
+                    }, {} as Record<string, typeof outputTypes>)
+                  ).map(([category, types]) => (
+                    <div key={category}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                        {category}
+                      </div>
+                      {types.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </div>
                   ))}
                 </SelectContent>
               </Select>
