@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Play, CheckCircle, XCircle, Zap } from "lucide-react";
 import { z } from "zod";
+import { FileViewer } from "./FileViewer";
 
 interface AITool {
   id: string;
@@ -22,6 +23,7 @@ interface AITool {
   input_fields: any;
   icon_url: string;
   webhook_url?: string;
+  output_type?: string;
 }
 
 interface ToolDialogProps {
@@ -434,23 +436,13 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
 
           {/* Results */}
           {result && (
-            <Card className="border-success/20 bg-success/5">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle className="h-5 w-5 text-success" />
-                  <h4 className="font-semibold text-success">Results</h4>
-                </div>
-                <div className="bg-background p-4 rounded border">
-                  {typeof result === 'string' ? (
-                    <div className="whitespace-pre-wrap text-sm">{result}</div>
-                  ) : (
-                    <pre className="whitespace-pre-wrap text-sm">
-                      {JSON.stringify(result, null, 2)}
-                    </pre>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle className="h-5 w-5 text-success" />
+                <h4 className="font-semibold text-success">Results</h4>
+              </div>
+              <FileViewer data={result} outputType={tool.output_type} />
+            </div>
           )}
 
           {/* Error */}

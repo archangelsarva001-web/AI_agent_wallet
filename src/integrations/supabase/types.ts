@@ -26,6 +26,7 @@ export type Database = {
           input_fields: Json
           is_active: boolean
           name: string
+          output_type: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           updated_at: string
@@ -42,6 +43,7 @@ export type Database = {
           input_fields?: Json
           is_active?: boolean
           name: string
+          output_type?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           updated_at?: string
@@ -58,6 +60,7 @@ export type Database = {
           input_fields?: Json
           is_active?: boolean
           name?: string
+          output_type?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           updated_at?: string

@@ -84,6 +84,18 @@ const categories = [
   "Sales"
 ];
 
+const outputTypes = [
+  { value: "smart", label: "Smart (Auto-detect)" },
+  { value: "text", label: "Text" },
+  { value: "json", label: "JSON" },
+  { value: "csv", label: "CSV" },
+  { value: "excel", label: "Excel" },
+  { value: "image", label: "Image" },
+  { value: "pdf", label: "PDF" },
+  { value: "html", label: "HTML" },
+  { value: "file", label: "Generic File" },
+];
+
 export const ToolCreationForm = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -93,6 +105,7 @@ export const ToolCreationForm = () => {
   const [webhookUrl, setWebhookUrl] = useState("");
   const [iconUrl, setIconUrl] = useState("");
   const [creditCost, setCreditCost] = useState("1");
+  const [outputType, setOutputType] = useState("smart");
   const [inputFields, setInputFields] = useState<InputField[]>([
     {
       id: crypto.randomUUID(),
@@ -183,6 +196,7 @@ export const ToolCreationForm = () => {
         webhook_url: webhookUrl,
         icon_url: iconUrl || null,
         credit_cost: parseInt(creditCost),
+        output_type: outputType,
         input_fields: inputFieldsData,
         is_active: true,
         approval_status: 'pending'
@@ -202,6 +216,7 @@ export const ToolCreationForm = () => {
       setWebhookUrl("");
       setIconUrl("");
       setCreditCost("1");
+      setOutputType("smart");
       setInputFields([
         {
           id: crypto.randomUUID(),
@@ -312,6 +327,25 @@ export const ToolCreationForm = () => {
                 onChange={(e) => setIconUrl(e.target.value)}
                 placeholder="https://example.com/icon.png"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="outputType">Output Type</Label>
+              <Select value={outputType} onValueChange={setOutputType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select output type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {outputTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                Choose "Smart" to auto-detect the output format, or select a specific type
+              </p>
             </div>
           </div>
 
