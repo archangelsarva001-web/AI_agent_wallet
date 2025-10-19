@@ -94,48 +94,50 @@ export const Header = ({ user }: HeaderProps) => {
               >
                 Usage
               </Link>
-              {(isAdmin || isModerator) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-1 outline-none">
-                    <Settings className="h-4 w-4" />
-                    Settings
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-popover z-50">
+              <DropdownMenu>
+                <DropdownMenuTrigger className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-1 outline-none">
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-popover z-50">
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings?tab=profile" className="flex items-center gap-2 cursor-pointer">
+                      <User className="h-4 w-4" />
+                      Profile Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  {isAdmin && (
                     <DropdownMenuItem asChild>
-                      <Link to="/settings?tab=profile" className="flex items-center gap-2 cursor-pointer">
-                        <User className="h-4 w-4" />
-                        Profile Settings
+                      <Link to="/settings?tab=users" className="flex items-center gap-2 cursor-pointer">
+                        <Users className="h-4 w-4" />
+                        User Management
                       </Link>
                     </DropdownMenuItem>
-                    {isAdmin && (
+                  )}
+                  {(isAdmin || isModerator) && (
+                    <>
                       <DropdownMenuItem asChild>
-                        <Link to="/settings?tab=users" className="flex items-center gap-2 cursor-pointer">
-                          <Users className="h-4 w-4" />
-                          User Management
+                        <Link to="/settings?tab=tools" className="flex items-center gap-2 cursor-pointer">
+                          <Code className="h-4 w-4" />
+                          Tool Dev
                         </Link>
                       </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem asChild>
-                      <Link to="/settings?tab=tools" className="flex items-center gap-2 cursor-pointer">
-                        <Code className="h-4 w-4" />
-                        Tool Dev
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/settings?tab=manage" className="flex items-center gap-2 cursor-pointer">
-                        <Settings className="h-4 w-4" />
-                        Manage Tools
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/settings?tab=approvals" className="flex items-center gap-2 cursor-pointer">
-                        <Settings className="h-4 w-4" />
-                        Tool Approvals
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+                      <DropdownMenuItem asChild>
+                        <Link to="/settings?tab=manage" className="flex items-center gap-2 cursor-pointer">
+                          <Settings className="h-4 w-4" />
+                          Manage Tools
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/settings?tab=approvals" className="flex items-center gap-2 cursor-pointer">
+                          <Settings className="h-4 w-4" />
+                          Tool Approvals
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button onClick={handleSignOut} variant="ghost" size="sm">
                 Sign Out
               </Button>
@@ -201,52 +203,54 @@ export const Header = ({ user }: HeaderProps) => {
                 >
                   Usage
                 </Link>
-                {(isAdmin || isModerator) && (
-                  <div className="space-y-2">
+                <div className="space-y-2">
+                  <Link
+                    to="/settings?tab=profile"
+                    className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2 pl-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <User className="h-4 w-4" />
+                    Profile Settings
+                  </Link>
+                  {isAdmin && (
                     <Link
-                      to="/settings?tab=profile"
+                      to="/settings?tab=users"
                       className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2 pl-2"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <User className="h-4 w-4" />
-                      Profile Settings
+                      <Users className="h-4 w-4" />
+                      User Management
                     </Link>
-                    {isAdmin && (
+                  )}
+                  {(isAdmin || isModerator) && (
+                    <>
                       <Link
-                        to="/settings?tab=users"
+                        to="/settings?tab=tools"
                         className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2 pl-2"
                         onClick={() => setIsMenuOpen(false)}
                       >
-                        <Users className="h-4 w-4" />
-                        User Management
+                        <Code className="h-4 w-4" />
+                        Tool Dev
                       </Link>
-                    )}
-                    <Link
-                      to="/settings?tab=tools"
-                      className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2 pl-2"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <Code className="h-4 w-4" />
-                      Tool Dev
-                    </Link>
-                    <Link
-                      to="/settings?tab=manage"
-                      className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2 pl-2"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <Settings className="h-4 w-4" />
-                      Manage Tools
-                    </Link>
-                    <Link
-                      to="/settings?tab=approvals"
-                      className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2 pl-2"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <Settings className="h-4 w-4" />
-                      Tool Approvals
-                    </Link>
-                  </div>
-                )}
+                      <Link
+                        to="/settings?tab=manage"
+                        className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2 pl-2"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Settings className="h-4 w-4" />
+                        Manage Tools
+                      </Link>
+                      <Link
+                        to="/settings?tab=approvals"
+                        className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground flex items-center gap-2 pl-2"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Settings className="h-4 w-4" />
+                        Tool Approvals
+                      </Link>
+                    </>
+                  )}
+                </div>
                 <Button
                   onClick={() => {
                     handleSignOut();
