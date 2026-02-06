@@ -8,24 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-const isValidWebhookUrl = (url: string): { valid: boolean; error?: string } => {
-  if (!url) return { valid: true };
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== 'https:') return { valid: false, error: 'Webhook URL must use HTTPS protocol' };
-    const hostname = parsed.hostname.toLowerCase();
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]') return { valid: false, error: 'Localhost URLs are not allowed' };
-    if (hostname.match(/^192\.168\./)) return { valid: false, error: 'Private IP addresses are not allowed' };
-    if (hostname.match(/^10\./)) return { valid: false, error: 'Private IP addresses are not allowed' };
-    if (hostname.match(/^172\.(1[6-9]|2[0-9]|3[0-1])\./)) return { valid: false, error: 'Private IP addresses are not allowed' };
-    if (hostname === '169.254.169.254') return { valid: false, error: 'Metadata endpoints are not allowed' };
-    if (hostname.match(/^169\.254\./)) return { valid: false, error: 'Link-local addresses are not allowed' };
-    return { valid: true };
-  } catch {
-    return { valid: false, error: 'Invalid URL format' };
-  }
-};
+import { isValidWebhookUrl } from "@/lib/webhook-validation";
 
 interface InputField {
   id: string;

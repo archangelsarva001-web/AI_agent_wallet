@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Play, CheckCircle, XCircle, Zap } from "lucide-react";
 import { z } from "zod";
 import { FileViewer } from "./FileViewer";
+import { isValidWebhookUrl } from "@/lib/webhook-validation";
 
 interface AITool {
   id: string;
@@ -181,6 +182,11 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
   const processToolWithWebhook = async (tool: AITool, inputData: any): Promise<any> => {
     if (!tool.webhook_url) {
       throw new Error('This tool requires a webhook URL to be configured.');
+    }
+
+    const webhookValidation = isValidWebhookUrl(tool.webhook_url);
+    if (!webhookValidation.valid) {
+      throw new Error(webhookValidation.error || 'Invalid webhook URL');
     }
 
     const hasFiles = Object.values(inputData).some(value => value instanceof File);
