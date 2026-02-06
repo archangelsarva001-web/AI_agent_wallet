@@ -184,68 +184,27 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
       throw new Error('This tool requires a webhook URL to be configured.');
     }
 
+    // Client-side pre-validation (server will re-validate)
     const webhookValidation = isValidWebhookUrl(tool.webhook_url);
     if (!webhookValidation.valid) {
       throw new Error(webhookValidation.error || 'Invalid webhook URL');
     }
 
-    const hasFiles = Object.values(inputData).some(value => value instanceof File);
-    
-    let requestBody: any;
-    let headers: any = {};
-    
-    if (hasFiles) {
-      const formData = new FormData();
-      Object.entries(inputData).forEach(([key, value]) => {
-        if (value instanceof File) {
-          formData.append(key, value);
-        } else {
-          formData.append(key, String(value));
-        }
-      });
-      formData.append('tool_name', tool.name);
-      formData.append('user_id', user?.id || '');
-      formData.append('timestamp', new Date().toISOString());
-      requestBody = formData;
-    } else {
-      requestBody = JSON.stringify({
-        tool_name: tool.name,
-        user_id: user?.id,
-        input_data: inputData,
-        timestamp: new Date().toISOString(),
-      });
-      headers['Content-Type'] = 'application/json';
-    }
-
-    if (import.meta.env.DEV) {
-      console.log('Starting webhook call');
-    }
-
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-      const response = await fetch(tool.webhook_url, {
-        method: 'POST',
-        headers: headers,
-        body: requestBody,
-        signal: controller.signal
+      const { data, error } = await supabase.functions.invoke('proxy-webhook', {
+        body: {
+          webhook_url: tool.webhook_url,
+          tool_name: tool.name,
+          input_data: inputData,
+        },
       });
 
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`Webhook failed: ${response.status} ${response.statusText}`);
+      if (error) {
+        throw new Error(error.message || 'Webhook execution failed');
       }
 
-      return await response.json();
+      return data;
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Webhook request timed out after 30 seconds.');
-      }
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        throw new Error('Unable to connect to webhook. Check CORS settings.');
-      }
       const originalMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Webhook execution failed: ${originalMessage}`);
     }
