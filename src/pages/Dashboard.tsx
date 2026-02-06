@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, CreditCard, Zap, Plus, Loader2, AlertCircle } from "lucide-react";
-import { Header } from "@/components/Header";
+
 import { useToast } from "@/hooks/use-toast";
 import { ToolCard } from "@/components/ToolCard";
 import { ToolDialog } from "@/components/ToolDialog";
@@ -134,20 +134,14 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header user={user} />
-        <div className="flex items-center justify-center h-96"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-      </div>
+      <div className="flex items-center justify-center h-96"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header user={user} />
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center"><p className="text-muted-foreground">Please sign in to access the dashboard</p></div>
-        </div>
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center"><p className="text-muted-foreground">Please sign in to access the dashboard</p></div>
       </div>
     );
   }
@@ -178,9 +172,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header user={user} />
-      <main className="container px-4 py-8">
+    <div className="container px-4 py-8">
         {/* Welcome + Account Status */}
         <section className="mb-8 animate-fade-in-up">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
@@ -295,7 +287,6 @@ export default function Dashboard() {
             )}
           </>
         )}
-      </main>
       {selectedTool && (
         <ToolDialog tool={selectedTool} isOpen={!!selectedTool} onClose={() => setSelectedTool(null)} credits={credits} onCreditsUpdate={refreshCredits} />
       )}

@@ -7,8 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 type TimeFilter = "day" | "week" | "month" | "year";
@@ -85,13 +83,9 @@ export default function Usage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Button variant="ghost" onClick={() => navigate("/dashboard")} className="mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />Back to Dashboard
-          </Button>
-          <div className="flex justify-between items-center">
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-6">
+        <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold">Usage Analytics</h1>
               <p className="text-muted-foreground mt-2">Track your tool usage and credit consumption</p>
@@ -174,6 +168,5 @@ export default function Usage() {
           </CardContent>
         </Card>
       </div>
-    </div>
   );
 }
