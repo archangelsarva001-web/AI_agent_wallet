@@ -32,8 +32,8 @@ export const ToolApprovalManager = () => {
 
   const fetchPendingTools = async () => {
     try {
-      const { data, error } = await supabase
-        .from('ai_tools')
+      const { data, error } = await (supabase
+        .from as any)('ai_tools')
         .select('*')
         .eq('approval_status', 'pending')
         .order('created_at', { ascending: false });
@@ -53,8 +53,8 @@ export const ToolApprovalManager = () => {
 
   const handleApproval = async (toolId: string, status: 'approved' | 'rejected') => {
     try {
-      const { error } = await supabase
-        .from('ai_tools')
+      const { error } = await (supabase
+        .from as any)('ai_tools')
         .update({
           approval_status: status,
           reviewed_at: new Date().toISOString(),

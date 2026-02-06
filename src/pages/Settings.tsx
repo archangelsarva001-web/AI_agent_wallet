@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserRoleManager } from "@/components/UserRoleManager";
 import { ToolCreationForm } from "@/components/ToolCreationForm";
 import { ToolApprovalManager } from "@/components/ToolApprovalManager";
@@ -32,13 +31,12 @@ const Settings = () => {
       }
 
       try {
-        const { data: adminCheck } = await supabase.rpc('is_admin', {
+        const { data: adminCheck } = await (supabase.rpc as any)('is_admin', {
           _user_id: user.id
         });
         setIsAdmin(adminCheck || false);
 
-        // Get user role
-        const { data: role } = await supabase.rpc('get_user_role', {
+        const { data: role } = await (supabase.rpc as any)('get_user_role', {
           _user_id: user.id
         });
         setUserRole(role);

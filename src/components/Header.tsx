@@ -32,12 +32,12 @@ export const Header = ({ user }: HeaderProps) => {
       }
 
       try {
-        const { data: adminCheck } = await supabase.rpc('is_admin', {
+        const { data: adminCheck } = await (supabase.rpc as any)('is_admin', {
           _user_id: user.id
         });
         setIsAdmin(adminCheck || false);
 
-        const { data: role } = await supabase.rpc('get_user_role', {
+        const { data: role } = await (supabase.rpc as any)('get_user_role', {
           _user_id: user.id
         });
         setIsModerator(role === 'moderator');
