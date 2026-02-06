@@ -15,6 +15,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { isValidWebhookUrl } from "@/lib/webhook-validation";
 
 interface Tool {
   id: string; name: string; description: string; category: string;
@@ -112,6 +113,13 @@ export const ToolManagement = () => {
     if (!editTool || !editName || !editDescription || !editCategory) {
       toast({ variant: "destructive", title: "Validation Error", description: "Please fill in all required fields" });
       return;
+    }
+    if (editWebhookUrl) {
+      const webhookValidation = isValidWebhookUrl(editWebhookUrl);
+      if (!webhookValidation.valid) {
+        toast({ variant: "destructive", title: "Invalid Webhook URL", description: webhookValidation.error });
+        return;
+      }
     }
     for (const field of editInputFields) {
       if (!field.name || !field.label) {
