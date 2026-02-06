@@ -11,16 +11,19 @@ export const HeroSection = () => {
         <img
           src={heroImage}
           alt="AutoHub"
-          className="w-full h-full object-cover opacity-20"
+          className="w-full h-full object-cover opacity-10"
         />
         <div className="absolute inset-0 gradient-subtle" />
       </div>
+
+      {/* Purple-blue gradient glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-[radial-gradient(ellipse_at_center,hsl(262_83%_58%_/_0.15),hsl(217_91%_60%_/_0.08),transparent_70%)] blur-3xl z-[1] pointer-events-none" />
 
       {/* Content */}
       <div className="relative z-10 container px-4 py-20">
         <div className="max-w-4xl mx-auto text-center animate-fade-in">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/50 border backdrop-blur-sm mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8">
             <Sparkles className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium">
               Access 50+ AI Tools in One Platform
@@ -60,21 +63,21 @@ export const HeroSection = () => {
               <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mx-auto mb-3">
                 <Zap className="h-6 w-6 text-primary" />
               </div>
-              <div className="text-2xl font-bold">50+</div>
+              <div className="text-2xl font-bold font-display">50+</div>
               <div className="text-sm text-muted-foreground">AI Tools</div>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mx-auto mb-3">
                 <Users className="h-6 w-6 text-primary" />
               </div>
-              <div className="text-2xl font-bold">10K+</div>
+              <div className="text-2xl font-bold font-display">10K+</div>
               <div className="text-sm text-muted-foreground">Active Users</div>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mx-auto mb-3">
                 <Sparkles className="h-6 w-6 text-primary" />
               </div>
-              <div className="text-2xl font-bold">99.9%</div>
+              <div className="text-2xl font-bold font-display">99.9%</div>
               <div className="text-sm text-muted-foreground">Uptime</div>
             </div>
           </div>

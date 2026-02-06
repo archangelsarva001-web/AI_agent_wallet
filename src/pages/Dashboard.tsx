@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Filter, CreditCard, Zap, Plus, Loader2, AlertCircle } from "lucide-react";
+import { Search, CreditCard, Zap, Plus, Loader2, AlertCircle } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useToast } from "@/hooks/use-toast";
 import { ToolCard } from "@/components/ToolCard";
 import { ToolDialog } from "@/components/ToolDialog";
 import { CreditPurchase } from "@/components/CreditPurchase";
+import { SpotlightCard } from "@/components/SpotlightCard";
 
 interface AITool {
   id: string;
@@ -135,7 +136,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-background">
         <Header user={user} />
-        <div className="flex items-center justify-center h-96"><Loader2 className="h-8 w-8 animate-spin" /></div>
+        <div className="flex items-center justify-center h-96"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
       </div>
     );
   }
@@ -151,63 +152,111 @@ export default function Dashboard() {
     );
   }
 
+  const renderToolGrid = (toolsList: AITool[], isComingSoon = false) => (
+    <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-6">
+      {toolsList.map((tool, index) => (
+        <div
+          key={tool.id}
+          className="break-inside-avoid mb-6 animate-fade-in-up"
+          style={{ animationDelay: `${index * 0.05}s` }}
+        >
+          {isComingSoon ? (
+            <div className="relative">
+              <div className="opacity-50 pointer-events-none">
+                <ToolCard tool={tool} credits={credits} onUse={() => {}} />
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Badge variant="outline" className="bg-background/90 backdrop-blur-sm border-white/10">Coming Soon</Badge>
+              </div>
+            </div>
+          ) : (
+            <ToolCard tool={tool} credits={credits} onUse={() => setSelectedTool(tool)} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <Header user={user} />
       <main className="container px-4 py-8">
-        <section className="mb-8">
+        {/* Welcome + Account Status */}
+        <section className="mb-8 animate-fade-in-up">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div>
               <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.user_metadata?.full_name || "there"}!</h1>
               <p className="text-muted-foreground">Choose from {tools.length} powerful AI tools to supercharge your workflow</p>
             </div>
-            <Card className="lg:w-80">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Account Status</CardTitle>
-                  <Button onClick={() => refreshCredits()} variant="ghost" size="sm" className="h-8 w-8 p-0"><Zap className="h-4 w-4" /></Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Credits</span>
-                  <Badge variant={credits >= 999999 ? "secondary" : credits > 10 ? "default" : "destructive"}>
-                    {credits >= 999999 ? "∞ Unlimited" : `${credits} available`}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Subscription</span>
-                  <Badge variant={subscription.subscribed ? "default" : "secondary"}>{subscription.subscribed ? "Pro" : "Free"}</Badge>
-                </div>
-                {!subscription.subscribed ? (
-                  <Button onClick={handleSubscribe} variant="hero" size="sm" className="w-full" disabled={isSubscribing}>
-                    {isSubscribing ? (<><Loader2 className="mr-2 h-3 w-3 animate-spin" />Starting...</>) : (<><Plus className="mr-2 h-3 w-3" />Upgrade to Pro</>)}
-                  </Button>
-                ) : (
-                  <Button onClick={handleManageSubscription} variant="outline" size="sm" className="w-full">
-                    <CreditCard className="mr-2 h-3 w-3" />Manage Plan
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
+            <SpotlightCard className="lg:w-80">
+              <Card className="hover:-translate-y-1 transition-all duration-300">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">Account Status</CardTitle>
+                    <Button onClick={() => refreshCredits()} variant="ghost" size="sm" className="h-8 w-8 p-0"><Zap className="h-4 w-4" /></Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Credits</span>
+                    <Badge variant={credits >= 999999 ? "secondary" : credits > 10 ? "default" : "destructive"}>
+                      <span className="font-mono">{credits >= 999999 ? "∞ Unlimited" : `${credits} available`}</span>
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Subscription</span>
+                    <Badge variant={subscription.subscribed ? "default" : "secondary"}>{subscription.subscribed ? "Pro" : "Free"}</Badge>
+                  </div>
+                  {!subscription.subscribed ? (
+                    <Button onClick={handleSubscribe} variant="hero" size="sm" className="w-full" disabled={isSubscribing}>
+                      {isSubscribing ? (<><Loader2 className="mr-2 h-3 w-3 animate-spin" />Starting...</>) : (<><Plus className="mr-2 h-3 w-3" />Upgrade to Pro</>)}
+                    </Button>
+                  ) : (
+                    <Button onClick={handleManageSubscription} variant="outline" size="sm" className="w-full">
+                      <CreditCard className="mr-2 h-3 w-3" />Manage Plan
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            </SpotlightCard>
           </div>
         </section>
+
         <CreditPurchase show={userRole === "user" && credits < 3} />
-        <section className="mb-8">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search AI tools..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
-            </div>
-            <div className="flex gap-2 overflow-x-auto">
-              {categories.map((category) => (
-                <Button key={category} variant={selectedCategory === category ? "default" : "outline"} size="sm" onClick={() => setSelectedCategory(category)} className="whitespace-nowrap">
-                  <Filter className="mr-1 h-3 w-3" />{category}
-                </Button>
-              ))}
+
+        {/* Omnibar Search */}
+        <section className="mb-6 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+          <div className="max-w-2xl mx-auto">
+            <div className="relative">
+              <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                placeholder="Search AI tools..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-14 h-14 text-lg rounded-2xl bg-card/40 backdrop-blur-xl border-white/10 focus:border-primary/50 transition-colors"
+              />
             </div>
           </div>
         </section>
+
+        {/* Category Filters */}
+        <section className="mb-8 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
+          <div className="flex gap-2 overflow-x-auto justify-center pb-2">
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setSelectedCategory(category)}
+                className="whitespace-nowrap rounded-full px-4"
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
+        </section>
+
+        {/* Tools Grid */}
         {searchTerm || selectedCategory !== "All" ? (
           <section>
             {filteredTools.length === 0 ? (
@@ -219,38 +268,29 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredTools.map((tool) => (<ToolCard key={tool.id} tool={tool} credits={credits} onUse={() => setSelectedTool(tool)} />))}
-              </div>
+              renderToolGrid(filteredTools)
             )}
           </section>
         ) : (
           <>
             {featuredTools.length > 0 && (
               <section className="mb-12">
-                <div className="flex items-center gap-2 mb-6">
-                  <Zap className="h-6 w-6 text-primary" /><h2 className="text-2xl font-bold">Featured Tools</h2><Badge variant="default">Live</Badge>
+                <div className="flex items-center gap-2 mb-6 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+                  <Zap className="h-6 w-6 text-primary" />
+                  <h2 className="text-2xl font-bold">Featured Tools</h2>
+                  <Badge variant="default">Live</Badge>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {featuredTools.map((tool) => (<ToolCard key={tool.id} tool={tool} credits={credits} onUse={() => setSelectedTool(tool)} />))}
-                </div>
+                {renderToolGrid(featuredTools)}
               </section>
             )}
             {comingSoonTools.length > 0 && (
               <section>
-                <div className="flex items-center gap-2 mb-6">
-                  <AlertCircle className="h-6 w-6 text-muted-foreground" /><h2 className="text-2xl font-bold">Coming Soon</h2><Badge variant="secondary">In Development</Badge>
+                <div className="flex items-center gap-2 mb-6 animate-fade-in-up" style={{ animationDelay: "0.25s" }}>
+                  <AlertCircle className="h-6 w-6 text-muted-foreground" />
+                  <h2 className="text-2xl font-bold">Coming Soon</h2>
+                  <Badge variant="secondary">In Development</Badge>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {comingSoonTools.map((tool) => (
-                    <div key={tool.id} className="relative">
-                      <div className="opacity-60 pointer-events-none"><ToolCard tool={tool} credits={credits} onUse={() => {}} /></div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Badge variant="outline" className="bg-background/90 backdrop-blur-sm">Coming Soon</Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                {renderToolGrid(comingSoonTools, true)}
               </section>
             )}
           </>

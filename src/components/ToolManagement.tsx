@@ -166,15 +166,23 @@ export const ToolManagement = () => {
     return (
       <div className="space-y-4">
         {filteredTools.map((tool) => (
-          <div key={tool.id} className="border rounded-lg p-4 space-y-3">
+          <Card key={tool.id} className="p-4 space-y-3 hover:-translate-y-0.5 transition-all duration-300">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h3 className="font-semibold text-lg">{tool.name}</h3>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className={`status-dot ${
+                    !tool.is_active ? 'status-dot-inactive' :
+                    tool.approval_status === 'approved' ? 'status-dot-active' :
+                    tool.approval_status === 'pending' ? 'status-dot-pending' :
+                    'status-dot-inactive'
+                  }`} />
+                  <h3 className="font-semibold text-lg font-display">{tool.name}</h3>
+                </div>
                 <p className="text-sm text-muted-foreground">{tool.description}</p>
                 <div className="flex gap-2 mt-2">
                   {getStatusBadge(tool.approval_status, tool.is_active)}
                   <Badge variant="outline">{tool.category}</Badge>
-                  <Badge variant="secondary">{tool.credit_cost} credits</Badge>
+                  <Badge variant="secondary" className="font-mono">{tool.credit_cost} credits</Badge>
                 </div>
               </div>
             </div>
@@ -186,7 +194,7 @@ export const ToolManagement = () => {
               </Button>
               <Button variant="destructive" size="sm" onClick={() => setDeleteToolId(tool.id)}><Trash2 className="w-4 h-4 mr-2" />Delete</Button>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     );
