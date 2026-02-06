@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DOMPurify from "dompurify";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -401,16 +402,21 @@ export const FileViewer = ({ data, outputType = "smart" }: FileViewerProps) => {
     
     // HTML
     if (detectedType === "html") {
+      const sanitizedHTML = DOMPurify.sanitize(data, {
+        ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'span', 'div', 'pre', 'code', 'blockquote', 'hr'],
+        ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel'],
+        ALLOW_DATA_ATTR: false,
+      });
       return (
         <div className="space-y-4">
           <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
             <p className="text-sm text-warning-foreground">
-              HTML preview - rendered content shown below
+              HTML preview - rendered content shown below (sanitized)
             </p>
           </div>
           <div 
             className="bg-background border border-border rounded-lg p-4"
-            dangerouslySetInnerHTML={{ __html: data }}
+            dangerouslySetInnerHTML={{ __html: sanitizedHTML }}
           />
         </div>
       );
