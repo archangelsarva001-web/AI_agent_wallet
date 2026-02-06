@@ -40,7 +40,7 @@ export const ToolCard = ({ tool, credits, onUse }: ToolCardProps) => {
       onMouseLeave={() => setIsHovered(false)}
       className="relative"
     >
-      <Card className="group hover:shadow-glow transition-all duration-300 hover:-translate-y-1 overflow-hidden relative">
+      <Card className="group bg-noise hover:shadow-glow transition-all duration-300 hover:-translate-y-1 overflow-hidden relative border border-white/5 hover:border-primary/50">
         {/* Spotlight overlay */}
         <div
           className="absolute inset-0 rounded-xl pointer-events-none z-10 transition-opacity duration-300"
@@ -53,7 +53,7 @@ export const ToolCard = ({ tool, credits, onUse }: ToolCardProps) => {
         />
         <CardHeader className="pb-3 relative z-20">
           <div className="flex items-center justify-between">
-            <div className="text-2xl">{tool.icon_url}</div>
+            <div className="text-2xl transition-transform duration-300 group-hover:scale-110">{tool.icon_url}</div>
             <Badge variant="secondary" className="text-xs font-mono">
               {tool.credit_cost} credit{tool.credit_cost !== 1 ? "s" : ""}
             </Badge>
@@ -76,7 +76,10 @@ export const ToolCard = ({ tool, credits, onUse }: ToolCardProps) => {
               size="sm"
               variant={canAfford ? "default" : "secondary"}
               disabled={!canAfford}
-              className="transition-all duration-300"
+              className={canAfford
+                ? "transition-all duration-300 shadow-[0_0_15px_hsl(var(--primary)/0.5),0_0_30px_hsl(var(--primary)/0.2)] hover:shadow-[0_0_20px_hsl(var(--primary)/0.6),0_0_40px_hsl(var(--primary)/0.3)] [text-shadow:0_0_10px_hsl(var(--primary)/0.5)]"
+                : "transition-all duration-300"
+              }
             >
               {canAfford ? (
                 <>
