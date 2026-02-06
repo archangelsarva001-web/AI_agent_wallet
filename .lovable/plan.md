@@ -1,71 +1,93 @@
 
 
-## Add Sidebar Layout for Authenticated Pages
+## Refactor Dashboard to Bento Grid Layout
 
-This plan creates a `DashboardLayout` component using the existing shadcn `Sidebar` and wraps the authenticated routes (`/dashboard`, `/settings`, `/usage`) with it. Navigation links currently in `Header.tsx` will be moved into the sidebar, and the Header will be simplified for authenticated pages.
+Replace the current masonry columns layout with a CSS Grid-based "Bento Grid" that gives distinct sizing to different content areas.
 
 ---
 
-### 1. Create `src/layouts/DashboardLayout.tsx`
+### 1. Floating Search Bar with Purple Glow
 
-A new layout component that:
-- Uses `SidebarProvider` wrapping the entire layout
-- Renders a `Sidebar` (collapsible, icon mode) with navigation links:
-  - **Main group:** Dashboard (`/dashboard`), Usage (`/usage`)
-  - **Settings group** (visible to all): Profile Settings (`/settings?tab=profile`)
-  - **Admin group** (visible to admin/moderator): User Management, Tool Dev, Manage Tools, Tool Approvals (all `/settings?tab=...`)
-- Includes a `SidebarHeader` with the AutoHub logo/branding
-- Includes a `SidebarFooter` with Sign Out button and ThemeToggle
-- Uses `useLocation` to highlight the active route
-- Fetches admin/moderator status via the same `supabase.rpc` calls currently in `Header.tsx`
-- Renders a top bar with `SidebarTrigger` (for toggling) and the credits Badge (with `font-mono`)
-- Uses `Outlet` from react-router-dom to render child route content in the main area
-- Applies `bg-noise` class to the main content wrapper for texture
+Replace the current Omnibar section with a floating, fixed-position-style search bar that has a purple radial glow behind it:
 
-### 2. Update `src/App.tsx`
+- Wrap the search input in a container with `relative` positioning
+- Add a `::before`-style purple glow div behind it: `absolute inset-0 bg-purple-600/20 blur-3xl rounded-full -z-10`
+- Keep the glassmorphism styling on the input (`bg-black/30 backdrop-blur-xl border-white/5 rounded-2xl`)
+- Make it visually "float" with extra padding, a subtle shadow, and `z-10`
 
-- Import `DashboardLayout`
-- Wrap `/dashboard`, `/settings`, and `/usage` in a parent `<Route>` with `element={<DashboardLayout />}`:
+---
+
+### 2. Bento Grid Layout
+
+Replace the `columns-1 md:columns-2...` masonry with a CSS Grid bento layout using explicit `grid-template-columns` and `grid-row` spans.
+
+**Top section (Welcome + Account Status):**
+- Use a 4-column grid: `grid grid-cols-1 lg:grid-cols-4 gap-6`
+- Welcome text spans 3 columns: `lg:col-span-3`
+- Account Status card spans 1 column but 2 rows tall: `lg:col-span-1 lg:row-span-2` -- making it the tall vertical card on the right
+
+**Featured Tools grid:**
+- Use `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6`
+- First 2 featured tools get large square sizing: `md:col-span-1 md:row-span-2 aspect-square` (or min-height to approximate square)
+- Remaining featured tools use standard 1x1 cells
+- Each tool card wrapped in `SpotlightCard`
+
+**Coming Soon grid:**
+- Standard `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6`
+- All cards 1x1, wrapped in `SpotlightCard` with the opacity overlay
+
+---
+
+### 3. Wrap All Tool Cards in SpotlightCard
+
+Currently `ToolCard` has its own inline spotlight effect. In the Dashboard render, wrap each `ToolCard` in the `SpotlightCard` component for consistency. The `ToolCard`'s own spotlight overlay will layer with `SpotlightCard` for a richer effect.
+
+---
+
+### 4. Account Status as Tall Vertical Card
+
+- Remove the `lg:w-80` constraint on the Account Status `SpotlightCard`
+- Instead, place it in the grid with `lg:row-span-2` so it stretches vertically alongside the welcome text and the search bar rows
+- Add `h-full` to the inner Card so it fills the tall cell
+- Add extra content to fill the vertical space: a small usage progress bar or additional stats
+
+---
+
+### 5. Filtered/Search Results
+
+When searching or filtering, switch to a flat bento grid (`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6`) with all cards wrapped in `SpotlightCard`.
+
+---
+
+### Summary of Changes
+
+| File | Changes |
+|------|---------|
+| `src/pages/Dashboard.tsx` | Replace masonry layout with CSS Grid bento; floating search with purple glow; wrap tool cards in SpotlightCard; Account Status as tall vertical card in grid |
+
+Single file change -- all modifications are within `Dashboard.tsx`. No new components or dependencies needed.
+
+---
+
+### Technical Detail
+
+The bento grid structure in JSX will look roughly like:
 
 ```text
-<Route element={<DashboardLayout />}>
-  <Route path="/dashboard" element={<Dashboard />} />
-  <Route path="/settings" element={<Settings />} />
-  <Route path="/usage" element={<Usage />} />
-</Route>
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+  <!-- Welcome text: col-span-3 -->
+  <!-- Search bar: col-span-3 (with purple glow) -->
+  <!-- Account Status: col-span-1, row-span-2 (tall) -->
+</div>
+
+<!-- Featured Tools -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+  <!-- First 2 tools: aspect-square or row-span-2 for large squares -->
+  <!-- Rest: standard 1x1 -->
+</div>
+
+<!-- Coming Soon -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+  <!-- All 1x1 with opacity overlay -->
+</div>
 ```
-
-### 3. Update `src/pages/Dashboard.tsx`
-
-- Remove the `<Header user={user} />` import and usage (the layout now provides navigation)
-- The page content stays as-is but without the Header wrapper
-
-### 4. Update `src/pages/Settings.tsx`
-
-- Remove the back button (sidebar provides navigation)
-- Remove redundant wrapper div structure since the layout handles the outer shell
-
-### 5. Update `src/pages/Usage.tsx`
-
-- Remove the "Back to Dashboard" button (sidebar provides navigation)
-- Remove standalone page wrapper since the layout handles it
-
-### 6. Simplify `src/components/Header.tsx`
-
-- Remove the authenticated-user navigation links (Dashboard, Usage, Settings dropdown) since they now live in the sidebar
-- Keep only: logo, ThemeToggle, and unauthenticated links (Features, Pricing, Sign In, Get Started)
-- The Header continues to be used on public pages (`/`, `/auth`, `/features`, etc.)
-
----
-
-### Summary of Files
-
-| File | Action |
-|------|--------|
-| `src/layouts/DashboardLayout.tsx` | **Create** -- SidebarProvider + Sidebar + Outlet layout |
-| `src/App.tsx` | **Edit** -- Wrap auth routes in DashboardLayout |
-| `src/pages/Dashboard.tsx` | **Edit** -- Remove Header usage |
-| `src/pages/Settings.tsx` | **Edit** -- Remove back button, simplify wrapper |
-| `src/pages/Usage.tsx` | **Edit** -- Remove back button, simplify wrapper |
-| `src/components/Header.tsx` | **Edit** -- Remove authenticated nav links, keep public-only |
-
