@@ -14,16 +14,229 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_tools: {
+        Row: {
+          approval_status: string
+          category: string
+          created_at: string
+          credit_cost: number
+          description: string
+          icon_url: string | null
+          id: string
+          input_fields: Json
+          is_active: boolean
+          name: string
+          output_type: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          webhook_url: string | null
+        }
+        Insert: {
+          approval_status?: string
+          category: string
+          created_at?: string
+          credit_cost?: number
+          description: string
+          icon_url?: string | null
+          id?: string
+          input_fields?: Json
+          is_active?: boolean
+          name: string
+          output_type?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          webhook_url?: string | null
+        }
+        Update: {
+          approval_status?: string
+          category?: string
+          created_at?: string
+          credit_cost?: number
+          description?: string
+          icon_url?: string | null
+          id?: string
+          input_fields?: Json
+          is_active?: boolean
+          name?: string
+          output_type?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          resource_id: string | null
+          resource_type: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      credits: {
+        Row: {
+          current_credits: number
+          id: string
+          last_purchase_date: string | null
+          last_updated: string
+          total_purchased: number
+          user_id: string
+        }
+        Insert: {
+          current_credits?: number
+          id?: string
+          last_purchase_date?: string | null
+          last_updated?: string
+          total_purchased?: number
+          user_id: string
+        }
+        Update: {
+          current_credits?: number
+          id?: string
+          last_purchase_date?: string | null
+          last_updated?: string
+          total_purchased?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tool_usages: {
+        Row: {
+          credits_deducted: number
+          id: string
+          input_data: Json | null
+          tool_id: string
+          used_at: string
+          user_id: string
+          webhook_response: Json | null
+        }
+        Insert: {
+          credits_deducted?: number
+          id?: string
+          input_data?: Json | null
+          tool_id: string
+          used_at?: string
+          user_id: string
+          webhook_response?: Json | null
+        }
+        Update: {
+          credits_deducted?: number
+          id?: string
+          input_data?: Json | null
+          tool_id?: string
+          used_at?: string
+          user_id?: string
+          webhook_response?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_usages_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "ai_tools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          is_active: boolean
+          is_subscribed: boolean
+          stripe_customer_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          is_active?: boolean
+          is_subscribed?: boolean
+          stripe_customer_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          is_subscribed?: boolean
+          stripe_customer_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_credits: { Args: { _user_id: string }; Returns: number }
+      get_user_role: { Args: { _user_id: string }; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      toggle_user_status: {
+        Args: { _is_active: boolean; _user_id: string }
+        Returns: boolean
+      }
+      update_user_role: {
+        Args: { _new_role: string; _target_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +363,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const

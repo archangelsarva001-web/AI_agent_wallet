@@ -52,9 +52,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       console.log('Refreshing credits for user:', user.id);
       
-      // Use the new role-based credit function
-      const { data, error } = await supabase
-        .rpc("get_user_credits", { _user_id: user.id });
+      const { data, error } = await (supabase.rpc as any)("get_user_credits", { _user_id: user.id });
       
       console.log('Credits response:', { data, error });
       
@@ -74,9 +72,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (!user || !session) return;
     
     try {
-      // First check local subscription status from users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
+      const { data: userData, error: userError } = await (supabase
+        .from as any)('users')
         .select('is_subscribed')
         .eq('id', user.id)
         .single();
@@ -86,7 +83,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return;
       }
       
-      // If locally subscribed, also check Stripe for detailed info
       if (userData?.is_subscribed) {
         const { data, error } = await supabase.functions.invoke("check-subscription", {
           headers: {
@@ -100,7 +96,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             subscribed: true,
             product_id: undefined,
             subscription_end: undefined 
-          }); // Fall back to local status
+          });
           return;
         }
         
@@ -175,19 +171,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Defer async operations with setTimeout
           setTimeout(() => {
             console.log('Auth state changed, refreshing credits');
             refreshCredits();
             refreshSubscription();
-          }, 100); // Slightly longer delay to ensure user state is set
+          }, 100);
         } else {
           setCredits(0);
           setSubscription({
@@ -201,7 +195,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     );
 
-    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -220,13 +213,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Refresh subscription periodically when user is logged in
   useEffect(() => {
     if (!user || !session) return;
     
     const interval = setInterval(() => {
       refreshSubscription();
-    }, 60000); // Every minute
+    }, 60000);
     
     return () => clearInterval(interval);
   }, [user, session]);

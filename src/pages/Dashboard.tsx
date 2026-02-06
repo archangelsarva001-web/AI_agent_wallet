@@ -6,15 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Search, 
-  Filter, 
-  CreditCard, 
-  Zap, 
-  Plus,
-  Loader2,
-  AlertCircle
-} from "lucide-react";
+import { Search, Filter, CreditCard, Zap, Plus, Loader2, AlertCircle } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useToast } from "@/hooks/use-toast";
 import { ToolCard } from "@/components/ToolCard";
@@ -33,14 +25,8 @@ interface AITool {
 }
 
 const categories = [
-  "All",
-  "Text Processing", 
-  "Image Generation", 
-  "Language Processing", 
-  "Development", 
-  "Marketing", 
-  "Communication",
-  "Sales"
+  "All", "Text Processing", "Image Generation", "Language Processing",
+  "Development", "Marketing", "Communication", "Sales"
 ];
 
 export default function Dashboard() {
@@ -59,20 +45,14 @@ export default function Dashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!user && !loading) {
-      navigate("/auth");
-    }
+    if (!user && !loading) navigate("/auth");
   }, [user, loading, navigate]);
 
   useEffect(() => {
     fetchTools();
     if (user) {
       fetchUserRole();
-      // Immediate refresh for admin users
-      setTimeout(() => {
-        console.log('Dashboard loaded, refreshing credits');
-        refreshCredits();
-      }, 200);
+      setTimeout(() => { refreshCredits(); }, 200);
     }
   }, [user]);
 
@@ -83,26 +63,17 @@ export default function Dashboard() {
 
   const fetchUserRole = async () => {
     if (!user) return;
-    
     try {
-      const { data, error } = await supabase
-        .rpc("get_user_role", { _user_id: user.id });
-      
-      if (error) {
-        console.error("Error fetching user role:", error);
-        return;
-      }
-      
+      const { data, error } = await (supabase.rpc as any)("get_user_role", { _user_id: user.id });
+      if (error) { console.error("Error fetching user role:", error); return; }
       setUserRole(data || "user");
-    } catch (error) {
-      console.error("Error in fetchUserRole:", error);
-    }
+    } catch (error) { console.error("Error in fetchUserRole:", error); }
   };
 
   const fetchTools = async () => {
     try {
-      const { data, error } = await supabase
-        .from("ai_tools")
+      const { data, error } = await (supabase
+        .from as any)("ai_tools")
         .select("id, name, description, category, credit_cost, input_fields, icon_url, webhook_url")
         .eq("is_active", true)
         .order("name");
@@ -111,63 +82,36 @@ export default function Dashboard() {
       setTools(data || []);
     } catch (error) {
       console.error("Error fetching tools:", error);
-      toast({
-        title: "Error loading tools",
-        description: "Please try refreshing the page",
-        variant: "destructive",
-      });
+      toast({ title: "Error loading tools", description: "Please try refreshing the page", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
   const separateToolsByWebhook = () => {
-    const featured = tools.filter(tool => tool.webhook_url);
-    const comingSoon = tools.filter(tool => !tool.webhook_url);
-    setFeaturedTools(featured);
-    setComingSoonTools(comingSoon);
+    setFeaturedTools(tools.filter(tool => tool.webhook_url));
+    setComingSoonTools(tools.filter(tool => !tool.webhook_url));
   };
 
   const filterTools = () => {
     let filtered = tools;
-    
-    if (searchTerm) {
-      filtered = filtered.filter(tool =>
-        tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tool.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    if (selectedCategory !== "All") {
-      filtered = filtered.filter(tool => tool.category === selectedCategory);
-    }
-    
+    if (searchTerm) filtered = filtered.filter(tool => tool.name.toLowerCase().includes(searchTerm.toLowerCase()) || tool.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    if (selectedCategory !== "All") filtered = filtered.filter(tool => tool.category === selectedCategory);
     setFilteredTools(filtered);
   };
 
   const handleSubscribe = async () => {
     if (!user || !session) return;
-    
     setIsSubscribing(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      
       if (error) throw error;
-      
-      if (data.url) {
-        window.open(data.url, '_blank');
-      }
+      if (data.url) window.open(data.url, '_blank');
     } catch (error) {
       console.error("Subscription error:", error);
-      toast({
-        title: "Subscription failed",
-        description: "Please try again or contact support",
-        variant: "destructive",
-      });
+      toast({ title: "Subscription failed", description: "Please try again or contact support", variant: "destructive" });
     } finally {
       setIsSubscribing(false);
     }
@@ -175,26 +119,15 @@ export default function Dashboard() {
 
   const handleManageSubscription = async () => {
     if (!user || !session) return;
-    
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal", {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      
       if (error) throw error;
-      
-      if (data.url) {
-        window.open(data.url, '_blank');
-      }
+      if (data.url) window.open(data.url, '_blank');
     } catch (error) {
       console.error("Portal error:", error);
-      toast({
-        title: "Unable to open portal",
-        description: "Please try again later",
-        variant: "destructive",
-      });
+      toast({ title: "Unable to open portal", description: "Please try again later", variant: "destructive" });
     }
   };
 
@@ -202,9 +135,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-background">
         <Header user={user} />
-        <div className="flex items-center justify-center h-96">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
+        <div className="flex items-center justify-center h-96"><Loader2 className="h-8 w-8 animate-spin" /></div>
       </div>
     );
   }
@@ -214,9 +145,7 @@ export default function Dashboard() {
       <div className="min-h-screen bg-background">
         <Header user={user} />
         <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <p className="text-muted-foreground">Please sign in to access the dashboard</p>
-          </div>
+          <div className="text-center"><p className="text-muted-foreground">Please sign in to access the dashboard</p></div>
         </div>
       </div>
     );
@@ -225,36 +154,18 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       <Header user={user} />
-      
       <main className="container px-4 py-8">
-        {/* Welcome Section */}
         <section className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div>
-              <h1 className="text-3xl font-bold mb-2">
-                Welcome back, {user?.user_metadata?.full_name || "there"}!
-              </h1>
-              <p className="text-muted-foreground">
-                Choose from {tools.length} powerful AI tools to supercharge your workflow
-              </p>
+              <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.user_metadata?.full_name || "there"}!</h1>
+              <p className="text-muted-foreground">Choose from {tools.length} powerful AI tools to supercharge your workflow</p>
             </div>
-            
-            {/* Credits & Subscription Card */}
             <Card className="lg:w-80">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">Account Status</CardTitle>
-                  <Button
-                    onClick={() => {
-                      console.log('Refresh button clicked');
-                      refreshCredits();
-                    }}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                  >
-                    <Zap className="h-4 w-4" />
-                  </Button>
+                  <Button onClick={() => refreshCredits()} variant="ghost" size="sm" className="h-8 w-8 p-0"><Zap className="h-4 w-4" /></Button>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -264,86 +175,39 @@ export default function Dashboard() {
                     {credits >= 999999 ? "∞ Unlimited" : `${credits} available`}
                   </Badge>
                 </div>
-                
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Subscription</span>
-                  <Badge variant={subscription.subscribed ? "default" : "secondary"}>
-                    {subscription.subscribed ? "Pro" : "Free"}
-                  </Badge>
+                  <Badge variant={subscription.subscribed ? "default" : "secondary"}>{subscription.subscribed ? "Pro" : "Free"}</Badge>
                 </div>
-                
                 {!subscription.subscribed ? (
-                  <Button 
-                    onClick={handleSubscribe}
-                    variant="hero" 
-                    size="sm" 
-                    className="w-full"
-                    disabled={isSubscribing}
-                  >
-                    {isSubscribing ? (
-                      <>
-                        <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                        Starting...
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="mr-2 h-3 w-3" />
-                        Upgrade to Pro
-                      </>
-                    )}
+                  <Button onClick={handleSubscribe} variant="hero" size="sm" className="w-full" disabled={isSubscribing}>
+                    {isSubscribing ? (<><Loader2 className="mr-2 h-3 w-3 animate-spin" />Starting...</>) : (<><Plus className="mr-2 h-3 w-3" />Upgrade to Pro</>)}
                   </Button>
                 ) : (
-                  <Button 
-                    onClick={handleManageSubscription}
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full"
-                  >
-                    <CreditCard className="mr-2 h-3 w-3" />
-                    Manage Plan
+                  <Button onClick={handleManageSubscription} variant="outline" size="sm" className="w-full">
+                    <CreditCard className="mr-2 h-3 w-3" />Manage Plan
                   </Button>
                 )}
               </CardContent>
             </Card>
           </div>
         </section>
-
-        {/* Credit Purchase Component - Show for regular users with low credits */}
-        <CreditPurchase 
-          show={userRole === "user" && credits < 3}
-        />
-
-        {/* Search & Filter */}
+        <CreditPurchase show={userRole === "user" && credits < 3} />
         <section className="mb-8">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search AI tools..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+              <Input placeholder="Search AI tools..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
-            
             <div className="flex gap-2 overflow-x-auto">
               {categories.map((category) => (
-                <Button
-                  key={category}
-                  variant={selectedCategory === category ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCategory(category)}
-                  className="whitespace-nowrap"
-                >
-                  <Filter className="mr-1 h-3 w-3" />
-                  {category}
+                <Button key={category} variant={selectedCategory === category ? "default" : "outline"} size="sm" onClick={() => setSelectedCategory(category)} className="whitespace-nowrap">
+                  <Filter className="mr-1 h-3 w-3" />{category}
                 </Button>
               ))}
             </div>
           </div>
         </section>
-
-        {/* Tools Grid - Show filtered or separated view */}
         {searchTerm || selectedCategory !== "All" ? (
           <section>
             {filteredTools.length === 0 ? (
@@ -351,69 +215,38 @@ export default function Dashboard() {
                 <CardContent>
                   <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <CardTitle className="mb-2">No tools found</CardTitle>
-                  <CardDescription>
-                    Try adjusting your search or filter criteria
-                  </CardDescription>
+                  <CardDescription>Try adjusting your search or filter criteria</CardDescription>
                 </CardContent>
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredTools.map((tool) => (
-                  <ToolCard
-                    key={tool.id}
-                    tool={tool}
-                    credits={credits}
-                    onUse={() => setSelectedTool(tool)}
-                  />
-                ))}
+                {filteredTools.map((tool) => (<ToolCard key={tool.id} tool={tool} credits={credits} onUse={() => setSelectedTool(tool)} />))}
               </div>
             )}
           </section>
         ) : (
           <>
-            {/* Featured Tools */}
             {featuredTools.length > 0 && (
               <section className="mb-12">
                 <div className="flex items-center gap-2 mb-6">
-                  <Zap className="h-6 w-6 text-primary" />
-                  <h2 className="text-2xl font-bold">Featured Tools</h2>
-                  <Badge variant="default">Live</Badge>
+                  <Zap className="h-6 w-6 text-primary" /><h2 className="text-2xl font-bold">Featured Tools</h2><Badge variant="default">Live</Badge>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {featuredTools.map((tool) => (
-                    <ToolCard
-                      key={tool.id}
-                      tool={tool}
-                      credits={credits}
-                      onUse={() => setSelectedTool(tool)}
-                    />
-                  ))}
+                  {featuredTools.map((tool) => (<ToolCard key={tool.id} tool={tool} credits={credits} onUse={() => setSelectedTool(tool)} />))}
                 </div>
               </section>
             )}
-
-            {/* Coming Soon Tools */}
             {comingSoonTools.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-6">
-                  <AlertCircle className="h-6 w-6 text-muted-foreground" />
-                  <h2 className="text-2xl font-bold">Coming Soon</h2>
-                  <Badge variant="secondary">In Development</Badge>
+                  <AlertCircle className="h-6 w-6 text-muted-foreground" /><h2 className="text-2xl font-bold">Coming Soon</h2><Badge variant="secondary">In Development</Badge>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {comingSoonTools.map((tool) => (
                     <div key={tool.id} className="relative">
-                      <div className="opacity-60 pointer-events-none">
-                        <ToolCard
-                          tool={tool}
-                          credits={credits}
-                          onUse={() => {}}
-                        />
-                      </div>
+                      <div className="opacity-60 pointer-events-none"><ToolCard tool={tool} credits={credits} onUse={() => {}} /></div>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <Badge variant="outline" className="bg-background/90 backdrop-blur-sm">
-                          Coming Soon
-                        </Badge>
+                        <Badge variant="outline" className="bg-background/90 backdrop-blur-sm">Coming Soon</Badge>
                       </div>
                     </div>
                   ))}
@@ -423,16 +256,8 @@ export default function Dashboard() {
           </>
         )}
       </main>
-
-      {/* Tool Dialog */}
       {selectedTool && (
-        <ToolDialog
-          tool={selectedTool}
-          isOpen={!!selectedTool}
-          onClose={() => setSelectedTool(null)}
-          credits={credits}
-          onCreditsUpdate={refreshCredits}
-        />
+        <ToolDialog tool={selectedTool} isOpen={!!selectedTool} onClose={() => setSelectedTool(null)} credits={credits} onCreditsUpdate={refreshCredits} />
       )}
     </div>
   );

@@ -62,7 +62,6 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
         throw new Error(`${field.label || fieldName} is required`);
       }
       
-      // Validate file type if it's a file field
       if (field.type === 'file' && formData[fieldName] && field.accept) {
         const file = formData[fieldName];
         const acceptedTypes = field.accept.split(',').map((t: string) => t.trim());
@@ -73,30 +72,20 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
         }
       }
 
-      // Comprehensive input validation using zod
       const value = formData[fieldName];
       if (value !== undefined && value !== null && value !== '' && !(value instanceof File)) {
         try {
-          // Validate string inputs
           if (typeof value === 'string') {
-            // Email validation
             if (field.type === 'email' || fieldName.toLowerCase().includes('email')) {
               z.string().email().max(255).parse(value);
-            }
-            // URL validation
-            else if (field.type === 'url' || fieldName.toLowerCase().includes('url')) {
+            } else if (field.type === 'url' || fieldName.toLowerCase().includes('url')) {
               z.string().url().max(2000).parse(value);
-            }
-            // General text validation with length limits
-            else if (field.type === 'textarea') {
+            } else if (field.type === 'textarea') {
               z.string().max(10000, 'Text is too long (max 10000 characters)').parse(value);
-            }
-            else {
+            } else {
               z.string().max(1000, 'Input is too long (max 1000 characters)').parse(value);
             }
-          }
-          // Validate numeric inputs
-          else if (typeof value === 'number') {
+          } else if (typeof value === 'number') {
             z.number().int().min(-1000000).max(1000000).parse(value);
           }
         } catch (validationError) {
@@ -106,12 +95,10 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
         }
       }
 
-      // Sanitize file names
       if (field.type === 'file' && formData[fieldName]) {
         const file = formData[fieldName];
         const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
         if (sanitizedName !== file.name) {
-          // Create a new file with sanitized name
           const sanitizedFile = new File([file], sanitizedName, { type: file.type });
           setFormData(prev => ({ ...prev, [fieldName]: sanitizedFile }));
         }
@@ -128,17 +115,15 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
       setError(null);
       setResult(null);
 
-      // Check credits using the role-aware function
-      const { data: currentCredits, error: creditsError } = await supabase
-        .rpc("get_user_credits", { _user_id: user.id });
+      const { data: currentCredits, error: creditsError } = await (supabase
+        .rpc as any)("get_user_credits", { _user_id: user.id });
 
-      if (creditsError || currentCredits < tool.credit_cost) {
+      if (creditsError || (currentCredits as number) < tool.credit_cost) {
         throw new Error("Insufficient credits");
       }
 
-      // Create usage log
-      const { data: logData, error: logError } = await supabase
-        .from("tool_usages")
+      const { data: logData, error: logError } = await (supabase
+        .from as any)("tool_usages")
         .insert({
           user_id: user.id,
           tool_id: tool.id,
@@ -150,29 +135,26 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
 
       if (logError) throw logError;
 
-      // Process the tool (webhook call if available, otherwise mock)
       const toolResult = await processToolWithWebhook(tool, formData);
       
-      // Only deduct credits AFTER successful webhook response (only if not admin with infinite credits)
       if (currentCredits !== 999999) {
-        const { error: updateError } = await supabase
-          .from("credits")
+        const { error: updateError } = await (supabase
+          .from as any)("credits")
           .update({
-            current_credits: currentCredits - tool.credit_cost
+            current_credits: (currentCredits as number) - tool.credit_cost
           })
           .eq("user_id", user.id);
 
         if (updateError) throw updateError;
       }
       
-      // Update usage log with result
-      await supabase
-        .from("tool_usages")
+      await (supabase
+        .from as any)("tool_usages")
         .update({
           webhook_response: toolResult,
           used_at: new Date().toISOString()
         })
-        .eq("id", logData.id);
+        .eq("id", (logData as any).id);
 
       setResult(toolResult);
       onCreditsUpdate();
@@ -196,24 +178,18 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
     }
   };
 
-  // Process tool with webhook support
   const processToolWithWebhook = async (tool: AITool, inputData: any): Promise<any> => {
     if (!tool.webhook_url) {
-      throw new Error('This tool requires a webhook URL to be configured. Please contact the administrator to set up the webhook integration.');
+      throw new Error('This tool requires a webhook URL to be configured.');
     }
 
-    const startTime = Date.now();
-    
-    // Check if we have file data to send as FormData
     const hasFiles = Object.values(inputData).some(value => value instanceof File);
     
     let requestBody: any;
     let headers: any = {};
     
     if (hasFiles) {
-      // Create FormData for file uploads
       const formData = new FormData();
-      
       Object.entries(inputData).forEach(([key, value]) => {
         if (value instanceof File) {
           formData.append(key, value);
@@ -221,16 +197,11 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
           formData.append(key, String(value));
         }
       });
-      
-      // Add metadata
       formData.append('tool_name', tool.name);
       formData.append('user_id', user?.id || '');
       formData.append('timestamp', new Date().toISOString());
-      
       requestBody = formData;
-      // Don't set Content-Type header - browser will set it with boundary
     } else {
-      // Regular JSON payload
       requestBody = JSON.stringify({
         tool_name: tool.name,
         user_id: user?.id,
@@ -240,14 +211,13 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
       headers['Content-Type'] = 'application/json';
     }
 
-    // Environment-gated logging (only in development)
     if (import.meta.env.DEV) {
       console.log('Starting webhook call');
     }
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       const response = await fetch(tool.webhook_url, {
         method: 'POST',
@@ -259,34 +229,21 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorText = await response.text();
         throw new Error(`Webhook failed: ${response.status} ${response.statusText}`);
       }
 
-      const result = await response.json();
-      
-      if (import.meta.env.DEV) {
-        console.log('Webhook completed successfully');
-      }
-
-      return result;
+      return await response.json();
     } catch (error) {
-
-      // Create user-friendly error messages
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Webhook request timed out after 30 seconds. Please check if your n8n workflow is running and responding correctly.');
+        throw new Error('Webhook request timed out after 30 seconds.');
       }
-
       if (error instanceof TypeError && error.message.includes('fetch')) {
-        throw new Error('Unable to connect to webhook. This might be a CORS issue or the webhook URL is unreachable. Please check your n8n workflow URL and CORS settings.');
+        throw new Error('Unable to connect to webhook. Check CORS settings.');
       }
-
-      // Re-throw the original error with additional context
       const originalMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Webhook execution failed: ${originalMessage}. Please check your n8n workflow and webhook configuration.`);
+      throw new Error(`Webhook execution failed: ${originalMessage}`);
     }
   };
-
 
   const renderFormField = (fieldConfig: any) => {
     const { name: fieldName, type, label, options, required, placeholder, accept } = fieldConfig;
@@ -304,9 +261,7 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
               accept={accept}
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) {
-                  handleInputChange(fieldName, file);
-                }
+                if (file) handleInputChange(fieldName, file);
               }}
               className="cursor-pointer"
             />
@@ -395,7 +350,6 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Input Form */}
           <div className="space-y-4">
             <h3 className="font-semibold">Configure Tool</h3>
             {(Array.isArray(tool.input_fields) 
@@ -404,7 +358,6 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
             ).map((fieldConfig: any) => renderFormField(fieldConfig))}
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-2">
             <Button
               onClick={handleRun}
@@ -434,7 +387,6 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
             </Button>
           </div>
 
-          {/* Results */}
           {result && (
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -445,7 +397,6 @@ export const ToolDialog = ({ tool, isOpen, onClose, credits, onCreditsUpdate }: 
             </div>
           )}
 
-          {/* Error */}
           {error && (
             <Card className="border-destructive/20 bg-destructive/5">
               <CardContent className="pt-6">
