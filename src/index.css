@@ -1,194 +1,156 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* SaaS AI Tools Marketplace Design System
-Technical, minimalist aesthetic with light color scheme
-All colors MUST be HSL.
+/* 2026 AI SaaS Dark-First Design System
+   Glassmorphic, dark-first aesthetic with spotlight effects
+   All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    /* Base colors - clean, technical palette */
-    --background: 209 40% 96%;
-    --foreground: 222 47% 11%;
+    /* Light mode - complementary to dark-first */
+    --background: 220 14% 96%;
+    --foreground: 224 71% 4%;
 
-    --card: 210 40% 98%;
-    --card-foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
 
-    --popover: 214 31% 91%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
 
-    /* Primary - technical blue */
-    --primary: 216 19% 26%;
-    --primary-foreground: 210 19% 98%;
-    --primary-glow: 217 91% 70%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 20% 98%;
+    --primary-glow: 217 91% 60%;
 
-    /* Secondary - subtle gray */
-    --secondary: 215 19% 34%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 9% 46%;
 
-    /* Muted - for subtle elements */
-    --muted: 215 20% 65%;
-    --muted-foreground: 222 47% 11%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    /* Accent - for highlights */
-    --accent: 210 40% 98%;
-    --accent-foreground: 215 16% 46%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 224 71% 4%;
 
-    /* Status colors */
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 0 85% 97%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
     --success: 142 76% 36%;
     --success-foreground: 355 100% 97%;
     --warning: 38 92% 50%;
     --warning-foreground: 48 96% 89%;
 
-    /* Borders and inputs */
-    --border: 212 26% 83%;
-    --input: 212 26% 83%;
-    --ring: 216 19% 26%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 262 83% 58%;
 
-    /* Gradients */
+    --radius: 0.75rem;
+
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
     --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)));
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(220 13% 98%));
 
-    /* Shadows */
-    --shadow-subtle: 0 1px 3px 0 hsl(220 14% 11% / 0.1), 0 1px 2px -1px hsl(220 14% 11% / 0.1);
-    --shadow-medium: 0 4px 6px -1px hsl(220 14% 11% / 0.1), 0 2px 4px -2px hsl(220 14% 11% / 0.1);
-    --shadow-large: 0 10px 15px -3px hsl(220 14% 11% / 0.1), 0 4px 6px -4px hsl(220 14% 11% / 0.1);
+    --shadow-subtle: 0 1px 3px 0 hsl(220 14% 11% / 0.1);
+    --shadow-medium: 0 4px 6px -1px hsl(220 14% 11% / 0.1);
+    --shadow-large: 0 10px 15px -3px hsl(220 14% 11% / 0.1);
     --shadow-glow: 0 0 30px hsl(var(--primary) / 0.15);
 
-    /* Animation easing */
     --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-    --radius: 0rem;
-
     --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 224 71% 4%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 210 20% 98%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 224 71% 4%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 262 83% 58%;
 
-    --sidebar-foreground: 222 47% 11%;
-
-    --sidebar-primary: 216 19% 26%;
-
-    --sidebar-primary-foreground: 210 19% 98%;
-
-    --sidebar-accent: 215 19% 34%;
-
-    --sidebar-accent-foreground: 210 40% 98%;
-
-    --sidebar-border: 212 26% 83%;
-
-    --sidebar-ring: 216 19% 26%;
-
-    --chart-1: 217 10% 64%;
-
-    --chart-2: 215 20% 65%;
-
-    --chart-3: 215 16% 46%;
-
-    --chart-4: 219 8% 46%;
-
-    --chart-5: 215 19% 34%;
-
-    --sidebar: 210 40% 98%;
-
-    --font-sans: 'DM Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-
-    --font-serif: 'Crimson Pro', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-
-    --font-mono: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --chart-1: 262 83% 58%;
+    --chart-2: 217 91% 60%;
+    --chart-3: 220 9% 46%;
+    --chart-4: 142 76% 36%;
+    --chart-5: 38 92% 50%;
 
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-
     --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-
     --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-
     --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-
     --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-
     --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-
     --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-
     --tracking-normal: 0em;
-
     --spacing: 0.25rem;
   }
 
   .dark {
-    /* Dark mode - keeping it subtle and professional */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    /* Dark-first: #0A0A0B background, Zinc-800 borders */
+    --background: 240 6% 4%;
+    --foreground: 210 20% 98%;
 
-    --card: 217 32% 17%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 4% 8%;
+    --card-foreground: 210 20% 98%;
 
-    --popover: 215 24% 26%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 4% 10%;
+    --popover-foreground: 210 20% 98%;
 
-    --primary: 212 26% 83%;
-    --primary-foreground: 228 84% 4%;
-    --primary-glow: 217 91% 70%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 20% 98%;
+    --primary-glow: 217 91% 60%;
 
-    --secondary: 215 19% 34%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 210 20% 98%;
 
-    --muted: 215 16% 46%;
-    --muted-foreground: 210 40% 98%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 228 84% 4%;
-    --accent-foreground: 215 20% 65%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 210 20% 98%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 85% 97%;
+    --destructive-foreground: 210 20% 98%;
     --success: 142 76% 36%;
     --success-foreground: 355 100% 97%;
     --warning: 38 92% 50%;
     --warning-foreground: 48 96% 89%;
 
-    --border: 215 19% 34%;
-    --input: 215 19% 34%;
-    --ring: 212 26% 83%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 262 83% 58%;
 
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
-    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)));
-    --gradient-card: linear-gradient(145deg, hsl(220 27% 9%), hsl(220 27% 11%));
+    --gradient-subtle: linear-gradient(180deg, hsl(240 6% 4%), hsl(240 4% 10%));
+    --gradient-card: linear-gradient(145deg, hsl(240 4% 8% / 0.4), hsl(240 4% 6% / 0.4));
 
-    --shadow-subtle: 0 1px 3px 0 hsl(0 0% 0% / 0.2), 0 1px 2px -1px hsl(0 0% 0% / 0.2);
-    --shadow-medium: 0 4px 6px -1px hsl(0 0% 0% / 0.2), 0 2px 4px -2px hsl(0 0% 0% / 0.2);
-    --shadow-large: 0 10px 15px -3px hsl(0 0% 0% / 0.3), 0 4px 6px -4px hsl(0 0% 0% / 0.3);
-    --shadow-glow: 0 0 30px hsl(var(--primary) / 0.25);
+    --shadow-subtle: 0 1px 3px 0 hsl(0 0% 0% / 0.3);
+    --shadow-medium: 0 4px 6px -1px hsl(0 0% 0% / 0.3);
+    --shadow-large: 0 10px 15px -3px hsl(0 0% 0% / 0.4);
+    --shadow-glow: 0 0 40px hsl(var(--primary) / 0.2);
 
-    --sidebar-background: 220 27% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 212 26% 83%;
-    --sidebar-primary-foreground: 228 84% 4%;
-    --sidebar-accent: 215 20% 65%;
-    --sidebar-accent-foreground: 228 84% 4%;
-    --sidebar-border: 215 19% 34%;
-    --sidebar-ring: 212 26% 83%;
-    --chart-1: 215 12% 83%;
-    --chart-2: 212 26% 83%;
-    --chart-3: 215 20% 65%;
-    --chart-4: 217 10% 64%;
-    --chart-5: 215 16% 46%;
-    --sidebar: 217 32% 17%;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    --sidebar-background: 240 6% 5%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 210 20% 98%;
+    --sidebar-accent: 240 4% 16%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 240 4% 16%;
+    --sidebar-ring: 262 83% 58%;
+
+    --chart-1: 262 83% 58%;
+    --chart-2: 217 91% 60%;
+    --chart-3: 240 5% 65%;
+    --chart-4: 142 76% 36%;
+    --chart-5: 38 92% 50%;
+
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.1);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.15);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.2), 0 1px 2px -1px hsl(0 0% 0% / 0.2);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.2), 0 1px 2px -1px hsl(0 0% 0% / 0.2);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.25), 0 2px 4px -1px hsl(0 0% 0% / 0.25);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.3), 0 4px 6px -1px hsl(0 0% 0% / 0.3);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.35), 0 8px 10px -1px hsl(0 0% 0% / 0.35);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.5);
   }
 }
 
@@ -201,13 +163,17 @@ All colors MUST be HSL.
     @apply bg-background text-foreground font-sans antialiased;
   }
 
+  h1, h2, h3 {
+    @apply font-display;
+  }
+
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    background: hsl(var(--muted));
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -240,7 +206,7 @@ All colors MUST be HSL.
 
   .shadow-medium {
     box-shadow: var(--shadow-medium);
-  }  
+  }
 
   .shadow-large {
     box-shadow: var(--shadow-large);
@@ -266,9 +232,53 @@ All colors MUST be HSL.
     background-clip: text;
   }
 
+  /* Glassmorphism utility */
+  .glass {
+    @apply bg-black/40 backdrop-blur-xl border border-white/10;
+  }
+
+  /* Spotlight card effect */
+  .spotlight-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .spotlight-card .spotlight-overlay {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .spotlight-card:hover .spotlight-overlay {
+    opacity: 1;
+  }
+
+  /* Status indicator dots */
+  .status-dot {
+    @apply w-2 h-2 rounded-full flex-shrink-0;
+  }
+  .status-dot-active {
+    @apply bg-green-500;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+  }
+  .status-dot-pending {
+    @apply bg-orange-500;
+    box-shadow: 0 0 6px rgba(249, 115, 22, 0.6);
+  }
+  .status-dot-inactive {
+    @apply bg-zinc-500;
+  }
+
   /* Animation utilities */
   .animate-fade-in {
     animation: fadeIn 0.6s var(--ease-smooth);
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s var(--ease-smooth) both;
   }
 
   .animate-slide-up {
@@ -281,11 +291,18 @@ All colors MUST be HSL.
 }
 
 @keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
   from {
     opacity: 0;
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -301,10 +318,6 @@ All colors MUST be HSL.
 }
 
 @keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 }
