@@ -86,7 +86,7 @@
 
   .dark {
     /* Dark-first: #0A0A0B background, Zinc-800 borders */
-    --background: 240 6% 4%;
+    --background: 240 10% 3.9%;
     --foreground: 210 20% 98%;
 
     --card: 240 4% 8%;
@@ -287,6 +287,21 @@
 
   .animate-float {
     animation: float 6s ease-in-out infinite;
+  }
+
+  /* Noise texture overlay */
+  .bg-noise {
+    position: relative;
+  }
+  .bg-noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 0;
+    mix-blend-mode: overlay;
   }
 }
 
