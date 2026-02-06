@@ -1,62 +1,71 @@
 
 
-## Modernize Design System -- Deeper Dark Theme + Noise Texture
+## Add Sidebar Layout for Authenticated Pages
 
-Three targeted changes to refine the existing dark-first design system.
+This plan creates a `DashboardLayout` component using the existing shadcn `Sidebar` and wraps the authenticated routes (`/dashboard`, `/settings`, `/usage`) with it. Navigation links currently in `Header.tsx` will be moved into the sidebar, and the Header will be simplified for authenticated pages.
 
 ---
 
-### 1. Update dark background in `src/index.css`
+### 1. Create `src/layouts/DashboardLayout.tsx`
 
-The `.dark` background variable changes from `240 6% 4%` to the richer `240 10% 3.9%`. This gives a slightly more saturated, deeper dark base.
+A new layout component that:
+- Uses `SidebarProvider` wrapping the entire layout
+- Renders a `Sidebar` (collapsible, icon mode) with navigation links:
+  - **Main group:** Dashboard (`/dashboard`), Usage (`/usage`)
+  - **Settings group** (visible to all): Profile Settings (`/settings?tab=profile`)
+  - **Admin group** (visible to admin/moderator): User Management, Tool Dev, Manage Tools, Tool Approvals (all `/settings?tab=...`)
+- Includes a `SidebarHeader` with the AutoHub logo/branding
+- Includes a `SidebarFooter` with Sign Out button and ThemeToggle
+- Uses `useLocation` to highlight the active route
+- Fetches admin/moderator status via the same `supabase.rpc` calls currently in `Header.tsx`
+- Renders a top bar with `SidebarTrigger` (for toggling) and the credits Badge (with `font-mono`)
+- Uses `Outlet` from react-router-dom to render child route content in the main area
+- Applies `bg-noise` class to the main content wrapper for texture
 
-Add a new `.bg-noise` utility class in the `@layer components` block that applies a subtle SVG noise texture overlay using a base64-encoded inline SVG pattern with low opacity, creating a film-grain effect:
+### 2. Update `src/App.tsx`
 
-```css
-.bg-noise {
-  position: relative;
-}
-.bg-noise::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,..."); /* tiny noise SVG */
-  opacity: 0.03;
-  pointer-events: none;
-  z-index: 0;
-}
+- Import `DashboardLayout`
+- Wrap `/dashboard`, `/settings`, and `/usage` in a parent `<Route>` with `element={<DashboardLayout />}`:
+
+```text
+<Route element={<DashboardLayout />}>
+  <Route path="/dashboard" element={<Dashboard />} />
+  <Route path="/settings" element={<Settings />} />
+  <Route path="/usage" element={<Usage />} />
+</Route>
 ```
 
----
+### 3. Update `src/pages/Dashboard.tsx`
 
-### 2. Confirm typography in `tailwind.config.ts`
+- Remove the `<Header user={user} />` import and usage (the layout now provides navigation)
+- The page content stays as-is but without the Header wrapper
 
-The font families are already correctly configured:
-- `font-display` -> Plus Jakarta Sans (headers)
-- `font-sans` -> Inter (body)
-- `font-mono` -> JetBrains Mono
+### 4. Update `src/pages/Settings.tsx`
 
-No changes needed here -- the config already matches the request.
+- Remove the back button (sidebar provides navigation)
+- Remove redundant wrapper div structure since the layout handles the outer shell
 
----
+### 5. Update `src/pages/Usage.tsx`
 
-### 3. Update Card glassmorphism in `src/components/ui/card.tsx`
+- Remove the "Back to Dashboard" button (sidebar provides navigation)
+- Remove standalone page wrapper since the layout handles it
 
-Change the Card base class from:
-`bg-card/40 backdrop-blur-xl border border-white/10`
+### 6. Simplify `src/components/Header.tsx`
 
-To the more subtle:
-`bg-black/20 backdrop-blur-xl border border-white/5`
-
-This makes cards more transparent with a softer border, giving a more refined glass effect against the deeper background.
+- Remove the authenticated-user navigation links (Dashboard, Usage, Settings dropdown) since they now live in the sidebar
+- Keep only: logo, ThemeToggle, and unauthenticated links (Features, Pricing, Sign In, Get Started)
+- The Header continues to be used on public pages (`/`, `/auth`, `/features`, etc.)
 
 ---
 
-### Summary of Changes
+### Summary of Files
 
-| File | Change |
+| File | Action |
 |------|--------|
-| `src/index.css` | Dark background to `240 10% 3.9%`; add `.bg-noise` utility class |
-| `tailwind.config.ts` | No changes needed (already correct) |
-| `src/components/ui/card.tsx` | Card class: `bg-black/20 backdrop-blur-xl border border-white/5` |
+| `src/layouts/DashboardLayout.tsx` | **Create** -- SidebarProvider + Sidebar + Outlet layout |
+| `src/App.tsx` | **Edit** -- Wrap auth routes in DashboardLayout |
+| `src/pages/Dashboard.tsx` | **Edit** -- Remove Header usage |
+| `src/pages/Settings.tsx` | **Edit** -- Remove back button, simplify wrapper |
+| `src/pages/Usage.tsx` | **Edit** -- Remove back button, simplify wrapper |
+| `src/components/Header.tsx` | **Edit** -- Remove authenticated nav links, keep public-only |
 
